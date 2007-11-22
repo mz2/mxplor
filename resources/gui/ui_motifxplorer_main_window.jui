@@ -1,0 +1,104 @@
+<ui version="4.0" language="jambi" >
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget" />
+  <widget class="QMenuBar" name="menubar" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFIle" >
+    <property name="title" >
+     <string>File</string>
+    </property>
+    <addaction name="actionNew" />
+    <addaction name="actionOpen" />
+    <addaction name="separator" />
+    <addaction name="actionSave" />
+    <addaction name="actionSave_as" />
+    <addaction name="separator" />
+    <addaction name="actionClose" />
+    <addaction name="actionQuit" />
+   </widget>
+   <widget class="QMenu" name="menuEdi" >
+    <property name="title" >
+     <string>Edit</string>
+    </property>
+    <addaction name="actionDelete" />
+   </widget>
+   <widget class="QMenu" name="menuAnalysis" >
+    <property name="title" >
+     <string>Analysis</string>
+    </property>
+    <addaction name="actionBest_hits" />
+    <addaction name="actionBest_reciprocal_hits" />
+   </widget>
+   <addaction name="menuFIle" />
+   <addaction name="menuEdi" />
+   <addaction name="menuAnalysis" />
+  </widget>
+  <widget class="QStatusBar" name="statusbar" />
+  <action name="actionNew" >
+   <property name="text" >
+    <string>New..</string>
+   </property>
+  </action>
+  <action name="actionOpen" >
+   <property name="text" >
+    <string>Open..</string>
+   </property>
+  </action>
+  <action name="actionSave" >
+   <property name="text" >
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSave_as" >
+   <property name="text" >
+    <string>Save as..</string>
+   </property>
+  </action>
+  <action name="actionClose" >
+   <property name="text" >
+    <string>Close</string>
+   </property>
+  </action>
+  <action name="actionQuit" >
+   <property name="text" >
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionDelete" >
+   <property name="text" >
+    <string>Delete motif</string>
+   </property>
+  </action>
+  <action name="actionBest_hits" >
+   <property name="text" >
+    <string>Best hits</string>
+   </property>
+  </action>
+  <action name="actionBest_reciprocal_hits" >
+   <property name="text" >
+    <string>Best reciprocal hits</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,179 @@
+<ui version="4.0" language="jambi" >
+ <class>UiMainWindow</class>
+ <widget class="QMainWindow" name="UiMainWindow" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>MotifXplorer</string>
+  </property>
+  <widget class="QWidget" name="centralwidget" >
+   <widget class="QWidget" name="verticalLayout" >
+    <property name="geometry" >
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>601</width>
+      <height>421</height>
+     </rect>
+    </property>
+    <property name="sizePolicy" >
+     <sizepolicy vsizetype="Maximum" hsizetype="Maximum" >
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="autoFillBackground" >
+     <bool>true</bool>
+    </property>
+    <layout class="QVBoxLayout" >
+     <property name="rightMargin" >
+      <number>0</number>
+     </property>
+     <property name="leftMargin" >
+      <number>0</number>
+     </property>
+     <property name="topMargin" >
+      <number>0</number>
+     </property>
+     <property name="bottomMargin" >
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTableView" name="motifTableView" >
+       <property name="showGrid" >
+        <bool>true</bool>
+       </property>
+       <property name="gridStyle" >
+        <enum>com.trolltech.qt.core.Qt.PenStyle.SolidLine</enum>
+       </property>
+       <property name="sortingEnabled" >
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuMotifExplorer" >
+    <property name="title" >
+     <string>File</string>
+    </property>
+    <addaction name="actionNew" />
+    <addaction name="actionSave" />
+    <addaction name="actionExport_PDF" />
+    <addaction name="actionOpen" />
+    <addaction name="actionClose" />
+    <addaction name="actionQuit" />
+   </widget>
+   <widget class="QMenu" name="menuEdit" >
+    <property name="title" >
+     <string>Edit</string>
+    </property>
+    <addaction name="actionShift_left" />
+    <addaction name="actionShift_right" />
+    <addaction name="actionReverse_complement" />
+   </widget>
+   <widget class="QMenu" name="menuAnalysis" >
+    <property name="title" >
+     <string>Analysis</string>
+    </property>
+    <addaction name="actionBest_hits" />
+    <addaction name="actionBest_reciprocal_hits" />
+   </widget>
+   <widget class="QMenu" name="menuHelp" >
+    <property name="title" >
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout_QT" />
+    <addaction name="actionAbout_MotifXplorer" />
+   </widget>
+   <addaction name="menuMotifExplorer" />
+   <addaction name="menuEdit" />
+   <addaction name="menuAnalysis" />
+   <addaction name="menuHelp" />
+  </widget>
+  <widget class="QStatusBar" name="statusbar" />
+  <action name="actionNew" >
+   <property name="text" >
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionSave" >
+   <property name="text" >
+    <string>Save..</string>
+   </property>
+  </action>
+  <action name="actionExport_PDF" >
+   <property name="text" >
+    <string>Export PDF..</string>
+   </property>
+  </action>
+  <action name="actionOpen" >
+   <property name="text" >
+    <string>Open..</string>
+   </property>
+  </action>
+  <action name="actionClose" >
+   <property name="text" >
+    <string>Close</string>
+   </property>
+  </action>
+  <action name="actionQuit" >
+   <property name="text" >
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionShift_left" >
+   <property name="text" >
+    <string>Shift left</string>
+   </property>
+  </action>
+  <action name="actionShift_right" >
+   <property name="text" >
+    <string>Shift right</string>
+   </property>
+  </action>
+  <action name="actionReverse_complement" >
+   <property name="text" >
+    <string>Reverse complement</string>
+   </property>
+  </action>
+  <action name="actionBest_hits" >
+   <property name="text" >
+    <string>Best hits</string>
+   </property>
+  </action>
+  <action name="actionBest_reciprocal_hits" >
+   <property name="text" >
+    <string>Best reciprocal hits</string>
+   </property>
+  </action>
+  <action name="actionAbout_QT" >
+   <property name="text" >
+    <string>About QT..</string>
+   </property>
+  </action>
+  <action name="actionAbout_MotifXplorer" >
+   <property name="text" >
+    <string>About MotifXplorer..</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
