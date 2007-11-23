@@ -24,6 +24,7 @@ public interface DistributionItemIface {
 	public void setSelectedDist(boolean bool);
 	public void toggleSelectedDist();
 	*/
+	//public boolean isUpdatable();
 	public void selectionStateUpdated();
 	public void highlightStateUpdated();
 	

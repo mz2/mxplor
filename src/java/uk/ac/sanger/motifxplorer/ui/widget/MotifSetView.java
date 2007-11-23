@@ -2,6 +2,7 @@
 package uk.ac.sanger.motifxplorer.ui.widget;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,11 +28,11 @@ import com.trolltech.qt.gui.QUndoStack;
 import com.trolltech.qt.gui.QVBoxLayout;
 import com.trolltech.qt.gui.QWidget;
 
-public class MotifSetWidget extends QFrame {
+public class MotifSetView extends QFrame {
 	private static final int NUM_SPACER_COLS = 2;
 	private static final int MAX_NUM_COLS = 20;
 	private List<QMotif> motifs;
-	private int maxCols = LogoWidget.DEFAULT_MAX_COLS;
+	private int maxCols = LogoView.DEFAULT_MAX_COLS;
 	public static final int DEFAULT_MAX_COLS = 16;
 	public static final int DEFAULT_X_OFFSET = 0;
 	
@@ -40,7 +41,7 @@ public class MotifSetWidget extends QFrame {
 	
 	private QUndoStack undoStack;
 	
-	public MotifSetWidget(QWidget parent, List<QMotif> motifs, int maxCols, int xOffset) {
+	public MotifSetView(QWidget parent, List<QMotif> motifs, int maxCols, int xOffset) {
 		super(parent);
 		
 		this.motifs = new ArrayList<QMotif>();
@@ -52,8 +53,10 @@ public class MotifSetWidget extends QFrame {
 		layout.setWidgetSpacing(0);
 		setLayout(layout);
 		
+		System.out.println("About to add motifs");
 		addMotifs(motifs);
 		
+		System.out.println("About to set mouse tracking on");
 		this.setMouseTracking(true);
 		
 		if (maxCols < 0)
@@ -61,46 +64,33 @@ public class MotifSetWidget extends QFrame {
 		else
 			this.maxCols = maxCols;
 		
+		/*
+		System.out.println("About to set motifs");
 		if (motifs == null)
 			this.motifs = new ArrayList<QMotif>();
 		else
 			this.motifs = motifs;
+		*/
 		
 		undoStack = new QUndoStack();
 		
 		resize(sizeHint());
 		setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed);
-		
 	}
 
-
-
-	public MotifSetWidget(List<QMotif> m) {
+	public MotifSetView(List<QMotif> m) {
 		this(null, m, DEFAULT_MAX_COLS, DEFAULT_X_OFFSET);
 	}
 
-	public MotifSetWidget(List<QMotif> m, int maxCols) {
+	public MotifSetView(List<QMotif> m, int maxCols) {
 		this(null, m, maxCols,DEFAULT_X_OFFSET);
 	}
 
-	public LabelledLogoWidget addMotif(QMotif qm) {
-		if (!this.motifs.contains(qm)) this.motifs.add(qm);
-		else throw new IllegalArgumentException("The motif " + qm + " is already present on this motif set widget!");
-		
-		System.out.println("QMOTIF:" + qm);
-		LabelledLogoWidget motifLogoWidget = new LabelledLogoWidget(layout,qm,this.maxCols);
-		layout().addWidget(motifLogoWidget);
-		widgets.add(motifLogoWidget);
-		repaint();
-		update();
-		return motifLogoWidget;
-	}
-	
 	public QSize sizeHint() {
 		int height;
 		if (motifs != null)
 			height = (int)Math.min(LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_HEIGHT, 
-								LogoWidget.MOTIF_HEIGHT * motifs.size());
+								LogoView.MOTIF_HEIGHT * motifs.size());
 		else
 			height = LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_HEIGHT;
 		
@@ -108,15 +98,34 @@ public class MotifSetWidget extends QFrame {
 	}
 	
 	public void addMotifs(List<QMotif> motifs) {
-		if (motifs != null) {
-			for (QMotif m : motifs)
-				addMotif(m);
+		if (motifs == null) {
+			this.motifs = new ArrayList<QMotif>();
 		}
+		for (QMotif m : motifs) addMotif(m);
+		System.out.println("About to determine max cols");
 		maxCols = maxCols(this.motifs);
 		resize(sizeHint());
 		update();
 		repaint();
 	}
+	
+
+	public LabelledLogoWidget addMotif(QMotif qm) {
+		if (!this.motifs.contains(qm)) this.motifs.add(qm);
+		else throw new IllegalArgumentException("The motif " + qm + " is already present on this motif set widget!");
+		
+		System.out.println("QMOTIF:" + qm);
+		LabelledLogoWidget motifLogoWidget = new LabelledLogoWidget(layout,qm,this.maxCols);
+		System.out.println("About to add to layout");
+		layout().addWidget(motifLogoWidget);
+		System.out.println("About to add to widgets");
+		widgets.add(motifLogoWidget);
+		//repaint();
+		//update();
+		System.out.println("About to return");
+		return motifLogoWidget;
+	}
+	
 
 	private int maxCols(List<QMotif> motifs) {
 		int maxCols = MAX_NUM_COLS;
@@ -208,14 +217,14 @@ public class MotifSetWidget extends QFrame {
 		//super.keyPressEvent(e);
 		if (Qt.Key.resolve(e.key()) == Qt.Key.Key_Left)
 			for (QMotif m : motifs)
-				if (m.isSelected() && (m.parent() instanceof LogoWidget))
-					((LogoWidget)m.parent()).moveToLeft();
+				if (m.isSelected() && (m.parent() instanceof LogoView))
+					((LogoView)m.parent()).moveToLeft();
 
 		
 		if (Qt.Key.resolve(e.key()) == Qt.Key.Key_Right)
 			for (QMotif m : motifs)
-				if (m.isSelected() && (m.parent() instanceof LogoWidget))
-					((LogoWidget)m.parent()).moveToRight();
+				if (m.isSelected() && (m.parent() instanceof LogoView))
+					((LogoView)m.parent()).moveToRight();
 		
 		this.update();
 	}
@@ -291,9 +300,14 @@ public class MotifSetWidget extends QFrame {
 		
 		
 		QApplication.initialize(args);
-		MotifSetWidget widget = new MotifSetWidget(null);
+		MotifSetView widget = new MotifSetView(null);
 		widget.addMotifs(QMotif.create(java.util.Arrays.asList(motifs)));
 		widget.show();
 		QApplication.exec();
+	}
+	
+	public static void writeMotifSet(OutputStream outputStream, MotifSetView widget) throws Exception {
+		List<Motif> motifs = QMotif.qmotifsToMotifs(widget.motifs);
+		MotifIOTools.writeMotifSetXML(outputStream, motifs.toArray(new Motif[motifs.size()]));
 	}
 }

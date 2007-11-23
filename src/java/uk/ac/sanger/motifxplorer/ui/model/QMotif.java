@@ -2,26 +2,33 @@ package uk.ac.sanger.motifxplorer.ui.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
+import net.derkholm.nmica.apps.MetaMotifSimulator;
 import net.derkholm.nmica.model.metamotif.Dirichlet;
 import net.derkholm.nmica.model.metamotif.MetaMotif;
 import net.derkholm.nmica.model.metamotif.MetaMotifIOTools;
 import net.derkholm.nmica.motif.Motif;
 
+import org.biojava.bio.Annotation;
 import org.biojava.bio.BioException;
 import org.biojava.bio.dist.Distribution;
 import org.biojava.bio.dp.WeightMatrix;
 import org.biojava.bio.symbol.IllegalAlphabetException;
 import org.biojava.bio.symbol.IllegalSymbolException;
 
+import uk.ac.sanger.motifxplorer.ui.graphics.QMotifBoundingBox;
+
 import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.core.QRect;
 import com.trolltech.qt.gui.QFont;
 import com.trolltech.qt.gui.QWidget;
 
-public class QMotif extends QObject {
-	public static final int PRECISION_ALPHA_SCALING = 5;
+//TODO: Save offset and selected columns as annotations!
 
+public class QMotif extends QObject {
+	public static final int PRECISION_ALPHA_SCALING = 2;
+	public static final int PRECISION_ALPHA_SCALING_FOR_SAMPLE = 3;
 	public static enum DrawingStyle {BLOCK, TEXT_LOGO};
 	public static enum EditState {READ_WRITE, READ_ONLY};
 	
@@ -30,7 +37,7 @@ public class QMotif extends QObject {
 
 	protected QFont font = null; 
 	
-	protected int horizontalOffset;
+	protected int offset;
 	
 	private List<QDistribution> dists;
 	public List<Integer> selectedColumns;
@@ -40,12 +47,23 @@ public class QMotif extends QObject {
 	
 	//Currently precisions are used without any alterations as the alpha channel
 	
-	private boolean isMetaMotif = true; //FIXME: Change to false ASAP!
+	private boolean isMetaMotif; //FIXME: Change to false ASAP!
 	private double[] precisions;
 	private double DEFAULT_PRECISION = 255;
 	private MetaMotif metaMotif;
 	
-    public QMotif(QWidget widget, Motif m) {
+	private QMotifBoundingBox boundingBox;
+	
+	private QMotif linkedQMotif;
+	private boolean highlighted;
+	
+	public QMotif getLinkedQMotif() {
+		assert  (linkedQMotif == null) || 
+				(linkedQMotif != null && linkedQMotif.linkedQMotif == null);
+		return linkedQMotif;
+	}
+
+	public QMotif(QWidget widget, Motif m) {
     	this.setParent(widget);
     	nmicaMotif = m;
     	setupDists();
@@ -53,6 +71,8 @@ public class QMotif extends QObject {
 
     	precisions = MetaMotifIOTools.alphaSumsFromMotif(m);
     	isMetaMotif = precisions != null;
+    	
+    	readQMotifAnnotations();
     }
     
     public QMotif(MetaMotif mm) {
@@ -61,12 +81,13 @@ public class QMotif extends QObject {
     
     public QMotif(QWidget widget, MetaMotif mm) {
     	this.setParent(widget);
-    	//TODO: Actually do the error handling here as it's supposed to
+    	//TODO: Actually do the error handling here as it's supposed to :)
     	try {
 			nmicaMotif = MetaMotifIOTools.metaMotifToAnnotatedMotif(mm);
 	    	setupDists();
 	    	setSelected(false);
 	    	precisions = MetaMotifIOTools.alphaSumsFromMotif(nmicaMotif);
+	    	isMetaMotif = precisions != null;
 		} catch (IllegalSymbolException e) {
 			e.printStackTrace();
 		} catch (IllegalAlphabetException e) {
@@ -74,15 +95,84 @@ public class QMotif extends QObject {
 		} catch (BioException e) {
 			e.printStackTrace();
 		}
-    	
+		
+		readQMotifAnnotations();
     }
     
+    private void readQMotifAnnotations() {
+		if (nmicaMotif.getAnnotation().containsProperty("offset")) {
+			Object o = nmicaMotif.getAnnotation().getProperty("offset");
+			if (o instanceof String)
+				this.offset = Integer.parseInt((String) o);
+			else if (o instanceof Integer)
+				this.offset = (Integer) o;
+		}
+		if (nmicaMotif.getAnnotation().containsProperty("isSelected")) {
+			this.selected = true;
+		}
+		if (nmicaMotif.getAnnotation().containsProperty("isHighlighted")) {
+			this.highlighted = true;
+		}
+
+		if (nmicaMotif.getAnnotation().containsProperty("selectedColumns")) {
+			Object o = nmicaMotif.getAnnotation()
+					.getProperty("selectedColumns");
+			if (!(o instanceof String))
+				throw new IllegalStateException(
+						"The selectedColumns annotation is not a String as required!");
+			StringTokenizer tok = new StringTokenizer((String) o, ",");
+
+			do {
+				selectedColumns.add(Integer.parseInt(tok.nextToken()));
+			} while (tok.hasMoreTokens());
+		}
+		if (nmicaMotif.getAnnotation().containsProperty("highlightedColumns")) {
+			Object o = nmicaMotif.getAnnotation().getProperty(
+					"highlightedColumns");
+			if (!(o instanceof String))
+				throw new IllegalStateException(
+						"The highlightedColumns annotation is not a String as required!");
+			StringTokenizer tok = new StringTokenizer((String) o, ",");
+
+			do {
+				highlightedColumns.add(Integer.parseInt(tok.nextToken()));
+			} while (tok.hasMoreTokens());
+		}
+	}
     
-    public QMotif(Motif m) {
+	public void updateQMotifAnnotations() {
+		Annotation ann = nmicaMotif.getAnnotation();
+		ann.setProperty("offset", "" + this.offset);
+		ann.setProperty("isSelected", this.selected ? true : false);
+		ann.setProperty("isHighlighted", this.highlighted ? true : false);
+		if (this.selectedColumns != null && this.selectedColumns.size() > 0) {
+			StringBuffer buf = new StringBuffer("" + this.selectedColumns.get(0));
+			int i = 1;
+			while (i < this.selectedColumns.size()) {
+				buf.append("," + this.selectedColumns.get(i));
+			}
+			ann.setProperty("selectedColumns", buf.toString());
+		}
+		if (this.highlightedColumns != null && this.highlightedColumns.size() > 0) {
+			StringBuffer buf = new StringBuffer("" + this.highlightedColumns.get(0));
+			int i = 1;
+			while (i < this.highlightedColumns.size()) {
+				buf.append("," + this.highlightedColumns.get(i));
+			}
+			ann.setProperty("highlightedColumns", buf.toString());
+		}
+	}
+
+	public QMotif(Motif m) {
     	this(null, m);
     }
     
-    public void setupDists() {
+    public QMotif(QWidget parent, QMotif qmotif, Motif sampleMotifFromMetaMotif) {
+		this(parent, sampleMotifFromMetaMotif);
+		this.linkedQMotif = qmotif;
+	}
+
+	public void setupDists() {
     	List<QDistribution> dists = new ArrayList<QDistribution>();
     	WeightMatrix wm = nmicaMotif.getWeightMatrix();
     	
@@ -131,21 +221,21 @@ public class QMotif extends QObject {
 	}
 
 	public void moveToLeft() {
-		horizontalOffset--;
+		offset--;
 	}
 	public void moveBy(int i) {
-		horizontalOffset = horizontalOffset + i;
+		offset = offset + i;
 	}
 	public void moveToRight() {
-		horizontalOffset++;
+		offset++;
 	}
 	
 	public void setHorizontalOffset(int offset) {
-		this.horizontalOffset = offset;
+		this.offset = offset;
 	}
 	
 	public int getHorizontalOffset() {
-		return this.horizontalOffset;
+		return this.offset;
 	}
 
 	public void toggleSelection(int i) {
@@ -321,4 +411,32 @@ public class QMotif extends QObject {
 		this.setColumnHighlighted(column,!columnIsHighlighted(column));
 	}
 
+	public QMotifBoundingBox getBoundingBox() {
+		return this.boundingBox;
+	}
+
+	public void setBoundingBox(QMotifBoundingBox motifBoundingBox) {
+		this.boundingBox = motifBoundingBox;
+	}
+
+	public QMotif[] sampleMotifsFromMetaMotif(QMotif motif,
+			String string, int sampleNum) {
+		if (!motif.isMetaMotif()) throw new IllegalArgumentException("");
+		QMotif[] qms = new QMotif[sampleNum];
+		for (int i = 0; i < sampleNum; i++) {
+			qms[i] = new QMotif((QWidget)motif.parent(), motif, MetaMotifSimulator.sampleMotifFromMetaMotif(
+								motif.getMetaMotif(), "" + i));}
+		
+		return qms;
+	}
+
+
+	public static List<Motif> qmotifsToMotifs(List<QMotif> qmotifs) {
+		List<Motif> motifs = new ArrayList<Motif>();
+		for (int i = 0; i < motifs.size(); i++) {
+			qmotifs.get(i).updateQMotifAnnotations(); //need to sync the XMS annotations before writing
+			motifs.add(qmotifs.get(i).getNmicaMotif());
+		}
+		return motifs;
+	}
 }

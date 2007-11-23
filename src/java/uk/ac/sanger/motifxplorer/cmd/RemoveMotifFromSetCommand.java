@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
-import uk.ac.sanger.motifxplorer.ui.widget.MotifSetWidget;
+import uk.ac.sanger.motifxplorer.ui.widget.MotifSetView;
 
 import com.trolltech.qt.gui.QUndoCommand;
 
@@ -12,15 +12,15 @@ import com.trolltech.qt.gui.QUndoCommand;
 public class RemoveMotifFromSetCommand extends QUndoCommand {
 	private List<QMotif> motifsBeforeRemoval;
 	private List<QMotif> motifsAfterRemoval;
-	private MotifSetWidget setWidget;
+	private MotifSetView setWidget;
 	private QMotif motif;
 	
-	public RemoveMotifFromSetCommand(MotifSetWidget setWidget, QMotif m) {
+	public RemoveMotifFromSetCommand(MotifSetView setWidget, QMotif m) {
 		this.setWidget = setWidget;
 		this.motif = m;
 	}
 	
-	private int findRowForMotif(MotifSetWidget setWidget, QMotif m) {
+	private int findRowForMotif(MotifSetView setWidget, QMotif m) {
 		return setWidget.getMotifs().indexOf(m);
 	}
 	public void redo() {

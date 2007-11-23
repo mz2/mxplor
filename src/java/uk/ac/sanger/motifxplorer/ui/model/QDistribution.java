@@ -11,8 +11,8 @@ import org.biojava.bio.symbol.FiniteAlphabet;
 import org.biojava.bio.symbol.IllegalSymbolException;
 import org.biojava.bio.symbol.Symbol;
 
-import uk.ac.sanger.motifxplorer.ui.widget.BoundaryItem;
-import uk.ac.sanger.motifxplorer.ui.widget.SymbolGraphicsItem;
+import uk.ac.sanger.motifxplorer.ui.graphics.BoundaryItem;
+import uk.ac.sanger.motifxplorer.ui.graphics.SymbolGraphicsItem;
 
 import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.gui.QFont;

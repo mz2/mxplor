@@ -1,15 +1,14 @@
-package uk.ac.sanger.motifxplorer.ui.widget;
+package uk.ac.sanger.motifxplorer.ui.graphics;
 
 import uk.ac.sanger.motifxplorer.ui.model.QDistribution;
+import uk.ac.sanger.motifxplorer.ui.widget.DistributionItemIface;
 
 import com.trolltech.qt.core.Qt;
 import com.trolltech.qt.gui.QBrush;
 import com.trolltech.qt.gui.QColor;
 import com.trolltech.qt.gui.QGraphicsItemInterface;
 import com.trolltech.qt.gui.QGraphicsPathItem;
-import com.trolltech.qt.gui.QGraphicsScene;
 import com.trolltech.qt.gui.QGraphicsSceneMouseEvent;
-import com.trolltech.qt.gui.QKeyEvent;
 import com.trolltech.qt.gui.QPainterPath;
 import com.trolltech.qt.gui.QPen;
 
@@ -35,96 +34,50 @@ public class SymbolGraphicsItem extends QGraphicsPathItem implements Distributio
 			
 	}
 	
-	private void commonInit() {
+	private void commonInit(boolean acceptsHover) {
 		//setBrush(normalBrush);
-		setAcceptsHoverEvents(true);
+		setAcceptsHoverEvents(acceptsHover);
+		if (acceptsHover) {
+			setAcceptedMouseButtons(new Qt.MouseButtons(Qt.MouseButton.RightButton, Qt.MouseButton.LeftButton));
+			setEnabled(true);
+		} else {
+			setAcceptedMouseButtons(new Qt.MouseButtons(Qt.MouseButton.NoButton));
+			setEnabled(false);
+		}
 	}
+	
 	public void mousePressEvent(QGraphicsSceneMouseEvent event) {
 		System.out.println("SymbolGraphicsItem received a mouse press event!");
 	}
 
-	public SymbolGraphicsItem() {
+	public SymbolGraphicsItem(boolean acceptsHover) {
 		super();
+		commonInit(acceptsHover);
 	}
 
-	public SymbolGraphicsItem(QDistribution dist, QGraphicsItemInterface arg0) {
+	public SymbolGraphicsItem(QDistribution dist, QGraphicsItemInterface arg0, boolean acceptsHover) {
 		super(arg0);
 		this.dist = dist;
-		commonInit();
+		commonInit(acceptsHover);
 	}
 
-	public SymbolGraphicsItem(QDistribution dist, QPainterPath arg0) {
+	public SymbolGraphicsItem(QDistribution dist, QPainterPath arg0, boolean acceptsHover) {
 		super(arg0);
 		this.dist = dist;
-		commonInit();
+		commonInit(acceptsHover);
 	}
 
 	public SymbolGraphicsItem(QDistribution dist, QPainterPath arg0,
-			QGraphicsItemInterface arg1) {
+			QGraphicsItemInterface arg1, boolean acceptsHover) {
 		super(arg0, arg1);
 		this.dist = dist;
-		commonInit();
+		commonInit(acceptsHover);
 	}
 
 	public QDistribution getDist() {
 		return dist;
 		
 	}
-
-	/*
-	public boolean isHighlightedDist() {
-		return dist.isHighlighted();
-	}
-
-	public void setHighlightedDist(boolean bool) {
-		setHighlightedDist(bool, false);
-	}
-	
-	//TODO:Maybe these methods (the ones with relayToParent/relayToChildren) should be required by the interface too?
-	public void setHighlightedDist(boolean bool, boolean relayToParent) {
-		dist.setHighlighted(bool);
-		System.out.println("Setting highlighted item");
-		if (relayToParent && (parentItem() != null) && (parentItem() instanceof BoundaryItem)) {
-			System.out.println(parentItem());
-			BoundaryItem boundItem = (BoundaryItem)parentItem();
-			boundItem.setHighlightedDist(bool, false); //don't want a cycle, hence false as the second arg
-		}
-	}
-
-	public void toggleHighlightedDist() {
-		toggleHighlightedDist(true);
-	}
-	
-	public void toggleHighlightedDist(boolean relayToParent) {
-		dist.setHighlighted(!dist.isHighlighted());
-		setHighlightedDist(!isHighlightedDist(), relayToParent);
-	}
-
-	
-	public void setSelectedDist(boolean bool) {
-		setSelectedDist(bool, false);
-	}
-	
-	public void setSelectedDist(boolean bool, boolean relayToParent) {
-		dist.setSelected(bool);
-		if (relayToParent && (parentItem() != null) && (parentItem() instanceof BoundaryItem)) {
-			BoundaryItem boundItem = (BoundaryItem)parentItem();
-			boundItem.setSelectedDist(bool, false); //don't want a cycle, hence false as the second arg
-		}
-	}
-	
-	public boolean isSelectedDist() {
-		return dist.isSelected();
-	}
-	
-	public void toggleSelectedDist() {
-		toggleSelectedDist(true);
-	}
-	
-	public void toggleSelectedDist(boolean relayToParent) {
-		dist.setSelected(!dist.isSelected());
-		setSelectedDist(!isSelectedDist(), relayToParent);
-	}*/
 
 	public int compareTo(SymbolGraphicsItem o) {
 		if (this.equals(o))

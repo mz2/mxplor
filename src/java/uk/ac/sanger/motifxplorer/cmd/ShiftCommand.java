@@ -3,7 +3,7 @@ package uk.ac.sanger.motifxplorer.cmd;
 import java.util.List;
 
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
-import uk.ac.sanger.motifxplorer.ui.widget.LogoWidget;
+import uk.ac.sanger.motifxplorer.ui.widget.LogoView;
 
 import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.gui.QUndoCommand;
@@ -22,8 +22,8 @@ public class ShiftCommand extends QUndoCommand {
 	
 	private void moveBy(int i) {
 		for (QMotif m : motifs) {
-			if (m.parent() instanceof LogoWidget)
-				((LogoWidget)m.parent()).moveBy(i);
+			if (m.parent() instanceof LogoView)
+				((LogoView)m.parent()).moveBy(i);
 			else
 				m.moveBy(i);
 		}

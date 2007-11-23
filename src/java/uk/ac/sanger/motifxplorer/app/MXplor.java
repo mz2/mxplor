@@ -1,11 +1,15 @@
 package uk.ac.sanger.motifxplorer.app;
+import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import net.derkholm.nmica.model.metamotif.DirichletParameterEstimator;
+import net.derkholm.nmica.model.metamotif.DirichletParamEstimator;
 import net.derkholm.nmica.model.metamotif.MetaMotif;
 import net.derkholm.nmica.model.metamotif.MetaMotifIOTools;
 import net.derkholm.nmica.motif.Motif;
@@ -21,8 +25,8 @@ import uk.ac.sanger.motifxplorer.nmica.NestedMICATask;
 import uk.ac.sanger.motifxplorer.ui.UiMainWindow;
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
 import uk.ac.sanger.motifxplorer.ui.widget.LabelledLogoWidget;
-import uk.ac.sanger.motifxplorer.ui.widget.LogoWidget;
-import uk.ac.sanger.motifxplorer.ui.widget.MotifSetWidget;
+import uk.ac.sanger.motifxplorer.ui.widget.LogoView;
+import uk.ac.sanger.motifxplorer.ui.widget.MotifSetView;
 
 import com.trolltech.qt.core.QMessageHandler;
 import com.trolltech.qt.core.QRect;
@@ -50,7 +54,7 @@ public class MXplor extends QMainWindow {
 	private UiMainWindow ui = new UiMainWindow();
     //private MotifTableModel motifTableModel = new MotifTableModel(this);
     //private List<QMotif> motifs;
-    private String fileName;
+    //private String fileName;
     
     public QAction actionNew;
     public QAction actionSave;
@@ -83,7 +87,7 @@ public class MXplor extends QMainWindow {
 	
     protected static List<MXplor> allMotifSetWindows = new ArrayList<MXplor>();
     
-	private MotifSetWidget motifSetWidget;
+	private MotifSetView motifSetWidget;
 	private QScrollArea scrollArea;
 	private boolean startNMICA;
 	private String[] args;
@@ -91,6 +95,7 @@ public class MXplor extends QMainWindow {
 	private QAction actionExtractMotifs;
 	private QAction actionUndo;
 	private QAction actionRedo;
+	private String savedFileName;
 	
 	//public static final int DEFAULT_MIN_SCROLL_AREA_HEIGHT = 600;
 	//public static final int DEFAULT_MAX_SCROLL_AREA_HEIGHT = 600;
@@ -99,10 +104,10 @@ public class MXplor extends QMainWindow {
 	public static final int DEFAULT_MAX_WINDOW_WIDTH = LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_WIDTH;
 	public static final int DEFAULT_MIN_WINDOW_HEIGHT = 400;
 	public static final int DEFAULT_MAX_WINDOW_HEIGHT = 600;
-	public static final int DEFAULT_MIN_COL_HEIGHT = LogoWidget.MOTIF_HEIGHT ;
+	public static final int DEFAULT_MIN_COL_HEIGHT = LogoView.MOTIF_HEIGHT ;
 
 	public MXplor(List<QMotif> motifs) {
-		this(motifs, MotifSetWidget.DEFAULT_MAX_COLS, MotifSetWidget.DEFAULT_X_OFFSET);
+		this(motifs, MotifSetView.DEFAULT_MAX_COLS, MotifSetView.DEFAULT_X_OFFSET);
 	}
 	
 	public MXplor(List<QMotif> motifs, int maxCols, int xOffset) {
@@ -110,37 +115,39 @@ public class MXplor extends QMainWindow {
 	}
 	
 	public MXplor(List<QMotif> motifs, int maxCols, int xOffset, String[] args, boolean startNMICA) {
-		QMessageHandler.installMessageHandler(new DebugMessageHandler());
-		
-		//cycleResultsReady.connect(this, "updateShownMotif(Motif, Integer)");
-		
-		setupUi(this, motifs, maxCols, xOffset);
+		System.out.println("About to set up UI");
+		setupUi(motifs, maxCols, xOffset);
+		System.out.println("UI set up");
 		this.startNMICA = startNMICA;
 		this.args = args;
 		
     	if (!allMotifSetWindows.contains(this))
     		MXplor.allMotifSetWindows.add(this);
     	
+    	System.out.println("About to show new window");
 		show();
 		resizeWindowAndScrollArea();
 	}
 	
 	
-	public void setupUi(MXplor uiMainWindow, List<QMotif> motifs, int maxCols,int xOffset) {
+	private void setupUi(List<QMotif> motifs, int maxCols,int xOffset) {
 		this.setMinimumWidth(DEFAULT_MIN_WINDOW_WIDTH);
 		this.setMaximumWidth(DEFAULT_MAX_WINDOW_WIDTH);
 		this.setMaximumHeight(DEFAULT_MAX_WINDOW_HEIGHT);
+		
+		System.out.println("About to create scroll area");
     	scrollArea = new QScrollArea();
 		scrollArea.setMinimumWidth(DEFAULT_MIN_WINDOW_WIDTH);
 		scrollArea.setMinimumWidth(DEFAULT_MAX_WINDOW_WIDTH);
 		
 		scrollArea.setMinimumHeight(DEFAULT_MIN_WINDOW_HEIGHT);
 		scrollArea.setMaximumHeight(DEFAULT_MAX_WINDOW_HEIGHT);
-		
+		System.out.println("About to set size policies");
 		this.setSizePolicy(QSizePolicy.Policy.Preferred,QSizePolicy.Policy.Preferred);
 		scrollArea.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred);
 		scrollArea.setWidgetResizable(true);
-		motifSetWidget = new MotifSetWidget(scrollArea, motifs, maxCols, xOffset);
+		System.out.println("About to create motif set view");
+		motifSetWidget = new MotifSetView(scrollArea, motifs, maxCols, xOffset);
 		motifSetWidget.setMinimumWidth(DEFAULT_MIN_WINDOW_WIDTH);
 		scrollArea.setWidget(motifSetWidget);
 		
@@ -148,40 +155,41 @@ public class MXplor extends QMainWindow {
 		setCentralWidget(scrollArea);
 		scrollArea.setParent(this);
 
-        actionNew = new QAction(uiMainWindow);
+		System.out.println("About to set actions");
+        actionNew = new QAction(this);
         actionNew.setObjectName("actionNew");
-        actionSave = new QAction(uiMainWindow);
+        actionSave = new QAction(this);
         actionSave.setObjectName("actionSave");
-        actionExport_PDF = new QAction(uiMainWindow);
+        actionExport_PDF = new QAction(this);
         actionExport_PDF.setObjectName("actionExport_PDF");
-        actionOpen = new QAction(uiMainWindow);
+        actionOpen = new QAction(this);
         actionOpen.setObjectName("actionOpen");
-        actionAdd = new QAction(uiMainWindow);
+        actionAdd = new QAction(this);
         actionAdd.setObjectName("actionAdd");
-        actionClose = new QAction(uiMainWindow);
+        actionClose = new QAction(this);
         actionClose.setObjectName("actionClose");
-        actionQuit = new QAction(uiMainWindow);
+        actionQuit = new QAction(this);
         actionQuit.setObjectName("actionQuit");
-        actionUndo = new QAction(uiMainWindow);
+        actionUndo = new QAction(this);
         actionUndo.setObjectName("actionUndo");
-        actionRedo = new QAction(uiMainWindow);
+        actionRedo = new QAction(this);
         actionRedo.setObjectName("actionRedo");
         
-        actionShift_left = new QAction(uiMainWindow);
+        actionShift_left = new QAction(this);
         actionShift_left.setObjectName("actionShift_left");
-        actionShift_right = new QAction(uiMainWindow);
+        actionShift_right = new QAction(this);
         actionShift_right.setObjectName("actionShift_right");
-        actionReverse_complement = new QAction(uiMainWindow);
+        actionReverse_complement = new QAction(this);
         actionReverse_complement.setObjectName("actionReverse_complement");
-        actionExtractMotifs = new QAction(uiMainWindow);
+        actionExtractMotifs = new QAction(this);
         actionExtractMotifs.setObjectName("actionExtractMotifs");
-        actionBest_hits = new QAction(uiMainWindow);
+        actionBest_hits = new QAction(this);
         actionBest_hits.setObjectName("actionBest_hits");
-        actionBest_reciprocal_hits = new QAction(uiMainWindow);
+        actionBest_reciprocal_hits = new QAction(this);
         actionBest_reciprocal_hits.setObjectName("actionBest_reciprocal_hits");
-        actionMLEMetaMotif = new QAction(uiMainWindow);
+        actionMLEMetaMotif = new QAction(this);
         actionMLEMetaMotif.setObjectName("actionMLEMetaMotif");
-        menubar = new QMenuBar(uiMainWindow);
+        menubar = new QMenuBar(this);
         menubar.setObjectName("menubar");
         menubar.setGeometry(new QRect(0, 0, 800, 22));
         menuMotifExplorer = new QMenu(menubar);
@@ -190,10 +198,12 @@ public class MXplor extends QMainWindow {
         menuEdit.setObjectName("menuEdit");
         menuAnalysis = new QMenu(menubar);
         menuAnalysis.setObjectName("menuAnalysis");
-        uiMainWindow.setMenuBar(menubar);
-        statusbar = new QStatusBar(uiMainWindow);
+        this.setMenuBar(menubar);
+        statusbar = new QStatusBar(this);
         statusbar.setObjectName("statusbar");
-        uiMainWindow.setStatusBar(statusbar);
+        this.setStatusBar(statusbar);
+        
+		System.out.println("Status bar added");
 
         menubar.addAction(menuMotifExplorer.menuAction());
         menubar.addAction(menuEdit.menuAction());
@@ -215,9 +225,12 @@ public class MXplor extends QMainWindow {
         menuAnalysis.addAction(actionBest_reciprocal_hits);
         menuAnalysis.addAction(actionMLEMetaMotif);
         
+		System.out.println("About to set icon, title and retranslate");
         setWindowIcon(new QIcon("classpath:icon.png"));
         setWindowTitle("mXplor");
-        retranslateUi(uiMainWindow);
+        retranslateUi(this);
+        
+        System.out.println("About to connect slots...");
         actionSave.triggered.connect(actionSave, "trigger()");
 
         this.connectSlotsByName();
@@ -239,15 +252,15 @@ public class MXplor extends QMainWindow {
 	}
 	
 	public void updateWidget() {
-		this.show();
-		this.repaint();
+		//this.show();
+		//this.repaint();
 		this.update();
-		motifSetWidget.show();
-		motifSetWidget.repaint();
-		motifSetWidget.update();
-		scrollArea.show();
-		scrollArea.repaint();
-		scrollArea.update();
+		//motifSetWidget.show();
+		//motifSetWidget.repaint();
+		//motifSetWidget.update();
+		//scrollArea.show();
+		//scrollArea.repaint();
+		//scrollArea.update();
 	}
 	
     void retranslateUi(QMainWindow UiMainWindow)
@@ -305,18 +318,21 @@ public class MXplor extends QMainWindow {
     	MetaMotif mm = null;
     	for (int i = 0; i < qmotifs.size(); i++)
     		motifs[i] = qmotifs.get(i).getNmicaMotif();
-    	try {
-    		mm = DirichletParameterEstimator.minkaMLE(motifs);
-    	} catch(Exception e) {
-    		QErrorMessage msg = new QErrorMessage();
-    		msg.setWindowIcon(new QIcon("classpath:tango/dialog-error.png"));
-    		msg.setWindowTitle("Error!");
-    		msg.showMessage(e.getMessage());
-    		return;
-    	}
     	
-    	MXplor mxplorWindow = new MXplor(QMotif.create(new Motif[]{MetaMotifIOTools.metaMotifToAnnotatedMotif(mm)}),
-				LogoWidget.DEFAULT_MAX_COLS, LogoWidget.DEFAULT_X_OFFSET, args, true);
+    	//try {
+    		System.out.println("Calculating maximum likelihood estimate for the motifs...");
+    		mm = DirichletParamEstimator.mle(motifs);
+    	//} catch(Exception e) {
+    	//	QErrorMessage msg = new QErrorMessage();
+    	//	msg.setWindowIcon(new QIcon("classpath:tango/dialog-error.png"));
+    	//	msg.setWindowTitle("Error!");
+    	//	msg.showMessage(e.getMessage());
+    	//	return;
+    	//}
+    	System.out.println("About to make QMS");
+    	List<QMotif> qms = QMotif.create(this.motifSetWidget,new Motif[]{MetaMotifIOTools.metaMotifToAnnotatedMotif(mm)});
+    	System.out.println("About to open mxplor window");
+    	MXplor mxplorWindow = new MXplor(qms);
     	System.out.println("Metamotif constructed:" + motifs.length);
     	mxplorWindow.show();
     	mxplorWindow.update();
@@ -328,7 +344,7 @@ public class MXplor extends QMainWindow {
     	System.out.println("Extracting motifs...");
     	Motif[] motifs = motifSetWidget.allSelectedColumnsAsMotifs();
     	MXplor mxplorWindow = new MXplor(QMotif.create(motifs),
-				LogoWidget.DEFAULT_MAX_COLS, LogoWidget.DEFAULT_X_OFFSET, args,
+				LogoView.DEFAULT_MAX_COLS, LogoView.DEFAULT_X_OFFSET, args,
 				true);
     	System.out.println("Motifs constructed:" + motifs.length);
     	mxplorWindow.show();
@@ -337,8 +353,13 @@ public class MXplor extends QMainWindow {
     	mxplorWindow.resizeWindowAndScrollArea();
     }
     
-    public void on_actionSave_triggered() {
-    	
+    public void on_actionSave_triggered() throws Exception {
+    	if (this.savedFileName == null) {
+    		savedFileName = QFileDialog.getSaveFileName();
+    	} exportSessionToXMS(
+				new BufferedOutputStream(
+						new FileOutputStream(
+							new File(savedFileName))));
     }
     
     public void on_actionClose_triggered() {
@@ -402,7 +423,10 @@ public class MXplor extends QMainWindow {
     			e.printStackTrace();
     		}
         }
-        return QMotif.create(motifList);
+        if (motifList != null)
+        	return QMotif.create(motifList);
+        else 
+        	return null;
     }
     
     public static void main(String args[]) throws Exception {
@@ -421,8 +445,8 @@ public class MXplor extends QMainWindow {
 			System.exit(1);
 		
 		MXplor window = new MXplor(QMotif.create(Arrays.asList(motifs)), 
-													LogoWidget.DEFAULT_MAX_COLS, 
-													LogoWidget.DEFAULT_X_OFFSET, args, true);
+													LogoView.DEFAULT_MAX_COLS, 
+													LogoView.DEFAULT_X_OFFSET, args, true);
 		window.show();
 		QApplication.exec();
 	}
@@ -485,5 +509,19 @@ public class MXplor extends QMainWindow {
 				}
 			}
 		});
+	}
+	
+	public void exportSetToXMS(OutputStream os) throws Exception {
+		List<Motif> motifs = QMotif.qmotifsToMotifs(this.motifSetWidget.getMotifs());
+		MotifIOTools.writeMotifSetXML(os, motifs.toArray(new Motif[motifs.size()]));
+	}
+	
+	public void exportSessionToXMS(OutputStream os) throws Exception {
+		for (int i = 0; i < allMotifSetWindows.size(); i++) {
+			System.out.println("Saving motifs in window " + 0);
+			List<Motif> motifs = QMotif.qmotifsToMotifs(allMotifSetWindows.get(i).motifSetWidget.getMotifs());
+			for (Motif m : motifs) {m.getAnnotation().setProperty("setId", "" + i);}
+			MotifIOTools.writeMotifSetXML(os, motifs.toArray(new Motif[motifs.size()]));
+		}
 	}
 }

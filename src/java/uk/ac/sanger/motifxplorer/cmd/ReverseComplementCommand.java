@@ -10,7 +10,7 @@ import org.biojava.bio.symbol.IllegalAlphabetException;
 import org.biojava.bio.symbol.MotifTools;
 
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
-import uk.ac.sanger.motifxplorer.ui.widget.LogoWidget;
+import uk.ac.sanger.motifxplorer.ui.widget.LogoView;
 
 import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.gui.QUndoCommand;
@@ -31,8 +31,8 @@ public class ReverseComplementCommand extends QUndoCommand {
 			System.out.println("Reverse complementing");
 			motif.getNmicaMotif().setWeightMatrix(WmTools.reverseComplement(motif.getNmicaMotif().getWeightMatrix()));
 			motif.setupDists();
-			if (motif.parent() instanceof LogoWidget) {
-				LogoWidget parentWidget = (LogoWidget)motif.parent();
+			if (motif.parent() instanceof LogoView) {
+				LogoView parentWidget = (LogoView)motif.parent();
 				parentWidget.setUpLogo(motif);
 				parentWidget.repaint();
 			}

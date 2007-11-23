@@ -1,6 +1,7 @@
-package uk.ac.sanger.motifxplorer.ui.widget;
+package uk.ac.sanger.motifxplorer.ui.graphics;
 
 import uk.ac.sanger.motifxplorer.ui.model.QDistribution;
+import uk.ac.sanger.motifxplorer.ui.widget.DistributionItemIface;
 
 import com.trolltech.qt.core.QRectF;
 import com.trolltech.qt.core.Qt;

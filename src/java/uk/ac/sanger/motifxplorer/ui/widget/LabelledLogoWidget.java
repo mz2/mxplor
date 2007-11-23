@@ -17,14 +17,14 @@ import com.trolltech.qt.gui.QWidget;
 
 //TODO: Change drag and drop such that one's actually dragging and dropping MotifLogoWithLabelWidgets
 public class LabelledLogoWidget extends QWidget {
-	private LogoWidget motifLogoWidget;
+	private LogoView motifLogoWidget;
 	private QLineEdit lineEdit;
 	
 	public static final int DEFAULT_MIN_LINE_EDIT_WIDTH = 150;
 	public static final int DEFAULT_MAX_LINE_EDIT_WIDTH = 200;
 	
-	public static final int DEFAULT_TOTAL_WIDGET_WIDTH = DEFAULT_MIN_LINE_EDIT_WIDTH + LogoWidget.MOTIF_WIDTH;
-	public static final int DEFAULT_TOTAL_WIDGET_HEIGHT = (int)LogoWidget.MOTIF_HEIGHT * 4;
+	public static final int DEFAULT_TOTAL_WIDGET_WIDTH = DEFAULT_MIN_LINE_EDIT_WIDTH + LogoView.MOTIF_WIDTH;
+	public static final int DEFAULT_TOTAL_WIDGET_HEIGHT = (int)LogoView.MOTIF_HEIGHT * 4;
 
 	public LabelledLogoWidget(QObject parent, QMotif m, int maxCols) {
 		this.setLayout(new QHBoxLayout());
@@ -34,7 +34,7 @@ public class LabelledLogoWidget extends QWidget {
 			//this.setParent(parent);
 			lineEdit = new QLineEdit();
 			lineEdit.setMinimumWidth(DEFAULT_MIN_LINE_EDIT_WIDTH);
-			lineEdit.setMaximumHeight(LogoWidget.MOTIF_WIDTH);
+			lineEdit.setMaximumHeight(LogoView.MOTIF_WIDTH);
 			lineEdit.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred);
 			lineEdit.setParent(this);
 			
@@ -47,16 +47,16 @@ public class LabelledLogoWidget extends QWidget {
 		if (m != null)
 			lineEdit.setText(m.getNmicaMotif().getName());
 
-		motifLogoWidget = new LogoWidget(	this, 
-											new QSize(LogoWidget.MOTIF_WIDTH, 
-													LogoWidget.MOTIF_HEIGHT), 
+		motifLogoWidget = new LogoView(	this, 
+											new QSize(LogoView.MOTIF_WIDTH, 
+													LogoView.MOTIF_HEIGHT), 
 											m, 
 											maxCols, 
-											LogoWidget.DEFAULT_X_OFFSET);
+											LogoView.DEFAULT_X_OFFSET);
 
-		motifLogoWidget.setMinimumWidth(LogoWidget.MOTIF_WIDTH);
-		motifLogoWidget.setMinimumHeight(LogoWidget.MOTIF_HEIGHT);
-		motifLogoWidget.setMaximumHeight(LogoWidget.MOTIF_HEIGHT);
+		motifLogoWidget.setMinimumWidth(LogoView.MOTIF_WIDTH);
+		motifLogoWidget.setMinimumHeight(LogoView.MOTIF_HEIGHT);
+		motifLogoWidget.setMaximumHeight(LogoView.MOTIF_HEIGHT);
 		motifLogoWidget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred);
 		motifLogoWidget.setParent(this);
 		layout().addWidget(motifLogoWidget);
@@ -77,7 +77,7 @@ public class LabelledLogoWidget extends QWidget {
 		Motif m = motifs[0];
 		QMotif qm = new QMotif(m);
 		QApplication.initialize(args);
-		QWidget widget = new LabelledLogoWidget(null, qm, LogoWidget.DEFAULT_MAX_COLS);
+		QWidget widget = new LabelledLogoWidget(null, qm, LogoView.DEFAULT_MAX_COLS);
 		widget.show();
 		//widget.resize(500,100);
 		QApplication.exec();
@@ -100,14 +100,14 @@ public class LabelledLogoWidget extends QWidget {
 	/**
 	 * @return the motifLogoWidget
 	 */
-	public LogoWidget getMotifLogoWidget() {
+	public LogoView getMotifLogoWidget() {
 		return motifLogoWidget;
 	}
 
 	/**
 	 * @param motifLogoWidget the motifLogoWidget to set
 	 */
-	public void setMotifLogoWidget(LogoWidget motifLogoWidget) {
+	public void setMotifLogoWidget(LogoView motifLogoWidget) {
 		this.motifLogoWidget = motifLogoWidget;
 	}
 
