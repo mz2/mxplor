@@ -42,6 +42,7 @@ public class BoundaryItem extends QGraphicsRectItem implements DistributionItemI
 		setBrush(normalBrush);
 		setPen(normalPen);
 		setAcceptsHoverEvents(true);
+		dist.setBoundItem(this);
 	}
 	
 	public BoundaryItem() {

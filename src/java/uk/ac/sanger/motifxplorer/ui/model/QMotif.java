@@ -17,7 +17,10 @@ import org.biojava.bio.dp.WeightMatrix;
 import org.biojava.bio.symbol.IllegalAlphabetException;
 import org.biojava.bio.symbol.IllegalSymbolException;
 
+import uk.ac.sanger.motifxplorer.ui.graphics.AnnotatedRegion;
 import uk.ac.sanger.motifxplorer.ui.graphics.QMotifBoundingBox;
+import uk.ac.sanger.motifxplorer.ui.graphics.ScoredAnnotatedRegion;
+import uk.ac.sanger.motifxplorer.ui.widget.LogoView;
 
 import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.core.QRect;
@@ -56,6 +59,7 @@ public class QMotif extends QObject {
 	
 	private QMotif linkedQMotif;
 	private boolean highlighted;
+	private List<AnnotatedRegion> annotatedRegions = new ArrayList<AnnotatedRegion>();
 	
 	public QMotif getLinkedQMotif() {
 		assert  (linkedQMotif == null) || 
@@ -330,6 +334,10 @@ public class QMotif extends QObject {
 	public void setSelected(boolean selected) {
 		this.selected = selected;
 	}
+	
+	public void toggleSelected() {
+		selected = !selected;
+	}
 
 	/**
 	 * @param precision the precision to set
@@ -439,4 +447,19 @@ public class QMotif extends QObject {
 		}
 		return motifs;
 	}
+
+	
+	public void addAnnotatedRegion(ScoredAnnotatedRegion ar) {
+		((LogoView)this.parent()).scene().addItem(ar);
+		annotatedRegions.add(ar);
+		((LogoView)this.parent()).update();
+		((LogoView)this.parent()).repaint();
+		
+		if (this.boundingBox != null)
+			ar.setParentItem(this.boundingBox);
+		else {
+			System.out.println();
+		}
+	}
+
 }

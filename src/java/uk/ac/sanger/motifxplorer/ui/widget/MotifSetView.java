@@ -40,10 +40,12 @@ public class MotifSetView extends QFrame {
 	private QVBoxLayout layout;
 	
 	private QUndoStack undoStack;
+	private boolean infoContentScale;
 	
-	public MotifSetView(QWidget parent, List<QMotif> motifs, int maxCols, int xOffset) {
+	public MotifSetView(QWidget parent, List<QMotif> motifs, int maxCols, int xOffset, boolean infoContentScale) {
 		super(parent);
 		
+		this.infoContentScale = true;
 		this.motifs = new ArrayList<QMotif>();
 
 		layout = new QVBoxLayout();
@@ -53,10 +55,8 @@ public class MotifSetView extends QFrame {
 		layout.setWidgetSpacing(0);
 		setLayout(layout);
 		
-		System.out.println("About to add motifs");
 		addMotifs(motifs);
 		
-		System.out.println("About to set mouse tracking on");
 		this.setMouseTracking(true);
 		
 		if (maxCols < 0)
@@ -64,26 +64,18 @@ public class MotifSetView extends QFrame {
 		else
 			this.maxCols = maxCols;
 		
-		/*
-		System.out.println("About to set motifs");
-		if (motifs == null)
-			this.motifs = new ArrayList<QMotif>();
-		else
-			this.motifs = motifs;
-		*/
-		
 		undoStack = new QUndoStack();
 		
 		resize(sizeHint());
 		setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed);
 	}
 
-	public MotifSetView(List<QMotif> m) {
-		this(null, m, DEFAULT_MAX_COLS, DEFAULT_X_OFFSET);
+	public MotifSetView(List<QMotif> m, boolean infoContentScale) {
+		this(null, m, DEFAULT_MAX_COLS, DEFAULT_X_OFFSET, infoContentScale);
 	}
 
-	public MotifSetView(List<QMotif> m, int maxCols) {
-		this(null, m, maxCols,DEFAULT_X_OFFSET);
+	public MotifSetView(List<QMotif> m, int maxCols, boolean infoContentScale) {
+		this(null, m, maxCols,DEFAULT_X_OFFSET, infoContentScale);
 	}
 
 	public QSize sizeHint() {
@@ -102,7 +94,6 @@ public class MotifSetView extends QFrame {
 			this.motifs = new ArrayList<QMotif>();
 		}
 		for (QMotif m : motifs) addMotif(m);
-		System.out.println("About to determine max cols");
 		maxCols = maxCols(this.motifs);
 		resize(sizeHint());
 		update();
@@ -112,17 +103,11 @@ public class MotifSetView extends QFrame {
 
 	public LabelledLogoWidget addMotif(QMotif qm) {
 		if (!this.motifs.contains(qm)) this.motifs.add(qm);
-		else throw new IllegalArgumentException("The motif " + qm + " is already present on this motif set widget!");
+		//else throw new IllegalArgumentException("The motif " + qm + " is already present on this motif set widget!");
 		
-		System.out.println("QMOTIF:" + qm);
-		LabelledLogoWidget motifLogoWidget = new LabelledLogoWidget(layout,qm,this.maxCols);
-		System.out.println("About to add to layout");
+		LabelledLogoWidget motifLogoWidget = new LabelledLogoWidget(layout,qm,this.maxCols, infoContentScale);
 		layout().addWidget(motifLogoWidget);
-		System.out.println("About to add to widgets");
 		widgets.add(motifLogoWidget);
-		//repaint();
-		//update();
-		System.out.println("About to return");
 		return motifLogoWidget;
 	}
 	
@@ -233,9 +218,31 @@ public class MotifSetView extends QFrame {
 		List<Distribution[]> dists = new ArrayList<Distribution[]>();
 		for (int i = 0; i < motifs.size(); i++) {
 			Distribution[] selDists = motifs.get(i).getSelectedColumns();
-			dists.add(motifs.get(i).getSelectedColumns());
+			dists.add(selDists);
 		}
 		return dists;
+	}
+	
+	public List<Double[]> allSelectedColumnPrecisions() {
+		List<Double[]> alphaSums = new ArrayList<Double[]>();
+		for (int i = 0; i < motifs.size(); i++) {
+			Dirichlet[] selDists = null;
+			Double[] precs = new Double[motifs.get(i).getSelectedColumns().length];
+			if (motifs.get(i).isMetaMotif()) {
+				selDists = motifs.get(i).getSelectedDirichletColumns();
+				//precs = new Double[selDists.length];
+				for (int j = 0; j < selDists.length; j++)
+					precs[j] = selDists[j].alphaSum();
+				alphaSums.add(precs);
+			} else {
+				for (int j = 0; j < precs.length; j++)
+					precs[j] = 0.0;
+				
+				alphaSums.add(precs);
+			}
+			
+		}
+		return alphaSums;
 	}
 	
 	public List<Dirichlet[]> allSelectedDirichletColumns() {
@@ -269,12 +276,16 @@ public class MotifSetView extends QFrame {
 	public Motif[] allSelectedColumnsAsMotifs() 
 		throws IllegalSymbolException,IllegalAlphabetException {
 		List<Distribution[]> distributions = allSelectedColumns();
+		List<Double[]> precisions = allSelectedColumnPrecisions();
 		List<Motif> motifs = new ArrayList<Motif>();
 		for (int i = 0; i < distributions.size(); i++) {
 			if (distributions.get(i) != null && distributions.get(i).length > 0) {
 				Motif m = new Motif();
 				m.setWeightMatrix(
 					new NMWeightMatrix(distributions.get(i), distributions.get(i).length, 0));
+				
+				for (int j = 0; j < m.getWeightMatrix().columns(); j++)
+					m.getAnnotation().setProperty("alphasum;column:"+j, precisions.get(i)[j]);
 				motifs.add(m);
 			} else {
 				System.out.println("" + i + " has no selected elements");
@@ -300,7 +311,7 @@ public class MotifSetView extends QFrame {
 		
 		
 		QApplication.initialize(args);
-		MotifSetView widget = new MotifSetView(null);
+		MotifSetView widget = new MotifSetView(null, true);
 		widget.addMotifs(QMotif.create(java.util.Arrays.asList(motifs)));
 		widget.show();
 		QApplication.exec();

@@ -3,68 +3,31 @@ package uk.ac.sanger.motifxplorer.ui.graphics;
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
 
 import com.trolltech.qt.core.QRectF;
+import com.trolltech.qt.core.Qt;
+import com.trolltech.qt.gui.QBrush;
+import com.trolltech.qt.gui.QColor;
 import com.trolltech.qt.gui.QGraphicsItemInterface;
 import com.trolltech.qt.gui.QGraphicsRectItem;
 import com.trolltech.qt.gui.QGraphicsScene;
+import com.trolltech.qt.gui.QPen;
 
-public class QMotifBoundingBox extends QGraphicsRectItem {
-	private QMotif motif;
+public class QMotifBoundingBox extends AnnotatedRegion {
+	private static QBrush defaultBrush = new QBrush(new QColor(0,0,0,0));
+	private static QPen defaultPen = new QPen(new QColor(0,0,0,0),0,
+			Qt.PenStyle.SolidLine,
+			Qt.PenCapStyle.RoundCap,
+			Qt.PenJoinStyle.RoundJoin);
+	
+	protected QBrush defaultBrush() {
+		return defaultBrush;
+	}
+	
+	protected QPen defaultPen() {
+		return defaultPen;
+	}
+	
 	
 	public QMotifBoundingBox(QMotif motif) {
-		super();
-		this.motif = motif;
+		super(motif,0,motif.getNmicaMotif().getWeightMatrix().columns()-1);
 	}
-	
-	public QMotif motif() {
-		return motif;
-	}
-	
-	public QMotifBoundingBox(QMotif motif, QGraphicsItemInterface arg0) {
-		super(arg0);
-		this.motif = motif;
-	}
-
-	public QMotifBoundingBox(QMotif motif,QRectF arg0) {
-		super(arg0);
-		this.motif = motif;
-	}
-
-	public QMotifBoundingBox(QMotif motif, QPrivateConstructor arg0) {
-		super(arg0);
-		this.motif = motif;
-	}
-
-	public QMotifBoundingBox(QMotif motif,QGraphicsItemInterface arg0, QGraphicsScene arg1) {
-		super(arg0, arg1);
-		this.motif = motif;
-	}
-
-	public QMotifBoundingBox(QMotif motif, QRectF arg0, QGraphicsItemInterface arg1) {
-		super(arg0, arg1);
-		this.motif = motif;
-	}
-
-	public QMotifBoundingBox(QMotif motif, QRectF arg0, QGraphicsItemInterface arg1,
-			QGraphicsScene arg2) {
-		super(arg0, arg1, arg2);
-		this.motif = motif;
-	}
-
-	public QMotifBoundingBox(QMotif motif, double arg0, double arg1, double arg2, double arg3) {
-		super(arg0, arg1, arg2, arg3);
-		this.motif = motif;
-	}
-
-	public QMotifBoundingBox(QMotif motif, double arg0, double arg1, double arg2,
-			double arg3, QGraphicsItemInterface arg4) {
-		super(arg0, arg1, arg2, arg3, arg4);
-		this.motif = motif;
-	}
-
-	public QMotifBoundingBox(QMotif motif, double arg0, double arg1, double arg2,
-			double arg3, QGraphicsItemInterface arg4, QGraphicsScene arg5) {
-		super(arg0, arg1, arg2, arg3, arg4, arg5);
-		this.motif = motif;
-	}
-
 }

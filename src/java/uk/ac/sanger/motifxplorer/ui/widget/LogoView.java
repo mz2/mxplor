@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import net.derkholm.nmica.apps.MetaMotifSimulator;
 import net.derkholm.nmica.model.metamotif.MetaMotif;
 import net.derkholm.nmica.model.metamotif.MetaMotifIOTools;
 import net.derkholm.nmica.motif.Motif;
@@ -68,7 +67,7 @@ import com.trolltech.qt.gui.QSizePolicy;
 import com.trolltech.qt.gui.QWidget;
 
 public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget {
-	private static final int SAMPLE_NUM = 30;
+	private static final int SAMPLE_NUM = 50;
 	private static final int HIGHLIGHT_PEN_WIDTH = 2;
 	private static final double NORMAL_PEN_WIDTH = 1.0;
 	private static final double PEN_OPACITY_SCALE = 3.0;
@@ -98,7 +97,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	//private double maxWidth = DEFAULT_WIDTH;
 	
 	public static final int MOTIF_HEIGHT = 70;
-	public static final int MOTIF_WIDTH = 450;
+	public static final int MOTIF_WIDTH = 550;
 	
 	private static final QPen borderNormalPen = new QPen(
 													new QColor(40,40,100),
@@ -218,21 +217,23 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	private QSize widgetSize;
 	
 	private QGraphicsPathItem borderItem;
-	
+	/*
 	private QPen borderFocusItem = new QPen();
-	private DistributionItemIface lastSelectedItem;
 	private QGraphicsPathItem dragInfoTextItem;
 	private QPainterPath dragInfoTextPath;
 	private QFont infoFont;
+	*/
+	private DistributionItemIface lastSelectedItem;
 	
 	private int METAMOTIF_OPACITY = 20;
 	private int NONMETAMOTIF_OPACITY = 150;
+	private boolean infoContentScale;
 	
 	
 	
 	private void setUpFont() {
 		this.font = new QFont("Arial", 1);
-		this.infoFont = new QFont("Arial", 30);
+		//this.infoFont = new QFont("Arial", 30);
 		font.setBold(true);
 	}
 	
@@ -277,9 +278,11 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		maxSymWidth = Math.max(maxSymWidth, rectT.width());
 	}
 
-	
 	//TODO: Rethink this. Not too general. Should give an interface as an argument instead
-	public void setUpLogo(QMotif qm) {
+	
+	public void setUpLogo(QMotif qm) {setUpLogo(qm, true);}
+	
+	public void setUpLogo(QMotif qm, boolean show) {
 		//this.removeDistributionGraphicsItems();
 		double blockWidth = this.blockWidth();
 		
@@ -308,14 +311,20 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 				throw new BioRuntimeException(ex);
 			}
 			
-			double distScale = qdist.getDistScale();
+			double distScale;
+			//if (infoContentScale &! !qm.isMetaMotif() &! isSample)
+			if (infoContentScale)
+				distScale = qdist.getDistScale();
+			else
+				distScale = 1;
+			
 			double totDistHeight = MOTIF_HEIGHT * distScale;
 			
 			double accumHeightOffsetFromBottom = 0.0;
 			double accumHeight = 0.0;
 			double accumHeightAlt = 0.0;
 			
-			double x = i * blockWidth * 1 + (this.size().width() * 0.02);
+			double x = i * blockWidth * 1;
 			
 			BoundaryItem distBoundItem = null;
 			if (includeBounds) {
@@ -353,7 +362,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 					if (isSample)
 						this.setPenAndBrush(s, symItem, Math.min(255,QMotif.PRECISION_ALPHA_SCALING_FOR_SAMPLE));
 					else if (qm.isMetaMotif())
-						this.setPenAndBrush(s, symItem, METAMOTIF_OPACITY);
+						this.setPenAndBrush(s, symItem, (int)Math.round(METAMOTIF_OPACITY * 0.1));
 					else
 						this.setPenAndBrush(s, symItem, NONMETAMOTIF_OPACITY);
 						
@@ -384,6 +393,14 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 				accumHeightOffsetFromBottom = accumHeightOffsetFromBottom + symItem.sceneBoundingRect().height();
 			}
 		}
+        
+        boundingBox.updateLocation();
+        
+        QGraphicsRectItem rect = new QGraphicsRectItem();
+		QDistribution b = motif.dists().get(0);
+		QDistribution e = motif.dists().get(2);
+		
+		scene().addItem(rect);
 	}
 	
 	
@@ -407,9 +424,10 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		scene().addItem(dragInfoTextItem);*/
 	}
 	
-	public LogoView(QWidget parent, QSize widgetSize, QMotif m, int maxCols, int xOffset) {
+	public LogoView(QWidget parent, QSize widgetSize, QMotif m, int maxCols, int xOffset, boolean infoContentScale) {
 		super(parent);
 		setParent(parent);
+		this.infoContentScale = infoContentScale;
 		this.maxCols = maxCols;
 		this.widgetSize = widgetSize;
 		resize(widgetSize);
@@ -618,7 +636,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 
 	
 	public void mouseDoubleClickEvent(QMouseEvent e) {
-		motif.setSelected(!motif.isSelected());
+		motif.toggleSelected();
 		if (motif.isSelected()) {
 			borderItem.setBrush(selectedBrush);
 		} else {
@@ -898,7 +916,6 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 				this.setUpLogo(motif);
 			else
 				if (motif.isMetaMotif()) {
-					System.out.println("Is metamotif!");
 					setUpLogo(motif);
 					QMotif[] qmotifs = motif.sampleMotifsFromMetaMotif(motif,"", SAMPLE_NUM);
 					for (int i=0; i < qmotifs.length; i++)
@@ -940,7 +957,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 								(int)MOTIF_HEIGHT),
 								qm,
 								LogoView.DEFAULT_MAX_COLS, 
-								LogoView.DEFAULT_X_OFFSET);
+								LogoView.DEFAULT_X_OFFSET, true);
 		widget.show();
 		//widget.resize(500,100);
 		QApplication.exec();

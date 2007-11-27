@@ -1,4 +1,4 @@
-<project name="TransCrypt" default="dist" basedir=".">
+<project name="mxplor" default="dist" basedir=".">
 	<description>
         simple example build file
     </description>
@@ -9,20 +9,21 @@
 	<property name="dist"  location="./dist"/>
 	<property name="lib" value="./lib" />
 	<property name="LOG4J" location="${lib}/log4j.jar" />
-	
+	<property environment="env"/>
 	<property name="conf" value="./conf" />
 	<property name="jar.main" value="${lib.dir}/${name.main}.jar" />
-	<property name="name.main" value="./transcrypt" />
+	<property name="name.main" value="./mxplor" />
 	<property name="manifest.dir" value="./manifest" />
 	<property name="manifest.file.main" value="${manifest.dir}/${name.main}.txt" />
 	<property name="resources" value="./resources"/>
+	<property name="unpacklib" value="./unpacked_lib" />
 
+    <taskdef name="jarbundler" 
+         classname="net.sourceforge.jarbundler.JarBundler" />
+	
 	<path id="libraries">
 		<fileset dir="${lib}">
 			<include name="*.jar"/>
-		</fileset>
-		<fileset dir="${dist}/lib">
-			<include name="transcrypt.jar"/>
 		</fileset>
 	</path>
 	
@@ -41,8 +42,11 @@
 	<target name="compile" depends="init"
         description="compile the source " >
 		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${src}" destdir="${build}" classpathref="libraries" target="1.5">
-		</javac>
+		<javac srcdir="${src}" 
+				destdir="${build}" 
+				classpathref="libraries" 
+				target="1.6"
+				source="1.6"/>
 		
 	</target>
 
@@ -60,7 +64,44 @@
 		</jar>
 	</target>
 
+	<target name="unpacklib">
+		<mkdir dir="${unpacklib}"/>
+		<unjar dest="${unpacklib}"><fileset dir="${lib}"><filename name="*.jar"/></fileset></unjar>
+		<copy todir="${unpacklib}/"><fileset dir="${env.QTJAMBI_PATH}/lib"><filename name="**"/></fileset></copy>
+		<copy todir="${unpacklib}"><fileset dir="${env.NMICA_HOME}"><filename name="*.jnilib"/></fileset></copy>
+		<delete dir="${unpacklib}/META-INF" />
+	</target>
 
+	<target name="libjar">
+		<javac srcdir="${src}" 
+				destdir="${unpacklib}" 
+				classpathref="libraries" 
+				target="1.6"
+				source="1.6"/>
+		<jar 	jarfile="${dist}/lib/libs.jar" 
+				basedir="${unpacklib}" 
+				manifest="${manifest.file.main}" 
+				compress="false">
+			<fileset dir="${unpacklib}" />
+		</jar>
+	</target>
+	
+	<target name="jambiapp" depends="dist">
+		<mkdir dir="${dist}/app"/>
+		<jarbundler dir="${dist}/app"
+            name="mXplor"
+            mainclass="uk.ac.sanger.motifxplorer.app.MXplor" 
+			icon="./images/icon.icns"
+			jvmversion="1.6+"
+			startonmainthread="true">
+			<documenttype name="XMS motif set"
+                    extensions="xms" 
+                    role="Editor"/>
+			<!--<javaproperty name="StartOnMainThread" value="true"/>-->
+			<jarfilelist dir="/" files="${dist}/lib/libs.jar,${dist}/lib/${name.main}.jar"/>
+		</jarbundler>
+	</target>
+	
 	<target name="clean"
         description="clean up" >
 		<delete dir="${build}"/>

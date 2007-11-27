@@ -19,6 +19,7 @@ import com.trolltech.qt.gui.QWidget;
 public class LabelledLogoWidget extends QWidget {
 	private LogoView motifLogoWidget;
 	private QLineEdit lineEdit;
+	private boolean infoContentScale;
 	
 	public static final int DEFAULT_MIN_LINE_EDIT_WIDTH = 150;
 	public static final int DEFAULT_MAX_LINE_EDIT_WIDTH = 200;
@@ -26,10 +27,11 @@ public class LabelledLogoWidget extends QWidget {
 	public static final int DEFAULT_TOTAL_WIDGET_WIDTH = DEFAULT_MIN_LINE_EDIT_WIDTH + LogoView.MOTIF_WIDTH;
 	public static final int DEFAULT_TOTAL_WIDGET_HEIGHT = (int)LogoView.MOTIF_HEIGHT * 4;
 
-	public LabelledLogoWidget(QObject parent, QMotif m, int maxCols) {
+	public LabelledLogoWidget(QObject parent, QMotif m, int maxCols, boolean infoContentScale) {
 		this.setLayout(new QHBoxLayout());
 		this.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed);
-		
+		this.infoContentScale = infoContentScale;
+		//System.out.println("INFOCONTENTSCALE:" + infoContentScale);
 		if (m != null) {
 			//this.setParent(parent);
 			lineEdit = new QLineEdit();
@@ -52,7 +54,8 @@ public class LabelledLogoWidget extends QWidget {
 													LogoView.MOTIF_HEIGHT), 
 											m, 
 											maxCols, 
-											LogoView.DEFAULT_X_OFFSET);
+											LogoView.DEFAULT_X_OFFSET,
+											infoContentScale);
 
 		motifLogoWidget.setMinimumWidth(LogoView.MOTIF_WIDTH);
 		motifLogoWidget.setMinimumHeight(LogoView.MOTIF_HEIGHT);
@@ -77,7 +80,7 @@ public class LabelledLogoWidget extends QWidget {
 		Motif m = motifs[0];
 		QMotif qm = new QMotif(m);
 		QApplication.initialize(args);
-		QWidget widget = new LabelledLogoWidget(null, qm, LogoView.DEFAULT_MAX_COLS);
+		QWidget widget = new LabelledLogoWidget(null, qm, LogoView.DEFAULT_MAX_COLS, true);
 		widget.show();
 		//widget.resize(500,100);
 		QApplication.exec();
