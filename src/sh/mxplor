@@ -1,0 +1,2 @@
+#!/bin/bash
+java -XstartOnFirstThread -jar mxplor_withlibs.jar

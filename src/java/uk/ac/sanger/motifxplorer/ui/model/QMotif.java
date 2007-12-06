@@ -1,8 +1,14 @@
 package uk.ac.sanger.motifxplorer.ui.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.derkholm.nmica.apps.MetaMotifSimulator;
 import net.derkholm.nmica.model.metamotif.Dirichlet;
@@ -17,15 +23,15 @@ import org.biojava.bio.dp.WeightMatrix;
 import org.biojava.bio.symbol.IllegalAlphabetException;
 import org.biojava.bio.symbol.IllegalSymbolException;
 
-import uk.ac.sanger.motifxplorer.ui.graphics.AnnotatedRegion;
-import uk.ac.sanger.motifxplorer.ui.graphics.QMotifBoundingBox;
-import uk.ac.sanger.motifxplorer.ui.graphics.ScoredAnnotatedRegion;
+import uk.ac.sanger.motifxplorer.ui.graphics.MotifBoundingBox;
+import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegion;
+import uk.ac.sanger.motifxplorer.ui.graphics.SelectableMotifRegion;
 import uk.ac.sanger.motifxplorer.ui.widget.LogoView;
 
 import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.core.QRect;
+import com.trolltech.qt.gui.QColor;
 import com.trolltech.qt.gui.QFont;
-import com.trolltech.qt.gui.QWidget;
 
 //TODO: Save offset and selected columns as annotations!
 
@@ -43,8 +49,8 @@ public class QMotif extends QObject {
 	protected int offset;
 	
 	private List<QDistribution> dists;
-	public List<Integer> selectedColumns;
-	public List<Integer> highlightedColumns;
+	public SortedSet<Integer> selectedColumns;
+	public SortedSet<Integer> highlightedColumns;
 	
 	public boolean selected;
 	
@@ -55,20 +61,28 @@ public class QMotif extends QObject {
 	private double DEFAULT_PRECISION = 255;
 	private MetaMotif metaMotif;
 	
-	private QMotifBoundingBox boundingBox;
+	private MotifBoundingBox boundingBox;
 	
 	private QMotif linkedQMotif;
 	private boolean highlighted;
-	private List<AnnotatedRegion> annotatedRegions = new ArrayList<AnnotatedRegion>();
+	private List<MotifRegion> regions = new ArrayList<MotifRegion>();
+	
+	private boolean isSample = false;
+	private QColor color;
 	
 	public QMotif getLinkedQMotif() {
 		assert  (linkedQMotif == null) || 
 				(linkedQMotif != null && linkedQMotif.linkedQMotif == null);
 		return linkedQMotif;
 	}
+	
+	public boolean isSample() {
+		return this.linkedQMotif != null;
+	}
+	
 
-	public QMotif(QWidget widget, Motif m) {
-    	this.setParent(widget);
+	public QMotif(LogoView view, Motif m) {
+    	this.setParent(view);
     	nmicaMotif = m;
     	setupDists();
     	setSelected(false);
@@ -83,8 +97,15 @@ public class QMotif extends QObject {
     	this(null, mm);
     }
     
-    public QMotif(QWidget widget, MetaMotif mm) {
-    	this.setParent(widget);
+    public static final Pattern TYPE_PATTERN = Pattern.compile("type:(\\w+)");
+    public static final Pattern NAME_PATTERN = Pattern.compile("name:(\\w+)");
+    public static final Pattern SELECTED_PATTERN = Pattern.compile("selected:(true|false)");
+    public static final Pattern BEGIN_PATTERN = Pattern.compile("begin:(\\d+)");
+    public static final Pattern LENGTH_PATTERN = Pattern.compile("length:(\\d+)");
+    public static final Pattern SET_ID_PATTERN = Pattern.compile("setId:(\\d+)");
+    
+    public QMotif(LogoView view, MetaMotif mm) {
+    	this.setParent(view);
     	//TODO: Actually do the error handling here as it's supposed to :)
     	try {
 			nmicaMotif = MetaMotifIOTools.metaMotifToAnnotatedMotif(mm);
@@ -142,6 +163,83 @@ public class QMotif extends QObject {
 				highlightedColumns.add(Integer.parseInt(tok.nextToken()));
 			} while (tok.hasMoreTokens());
 		}
+		if (nmicaMotif.getAnnotation().containsProperty("motifregions")) {
+			Object motifRegsO = nmicaMotif.getAnnotation().getProperty("motifregions");
+			int num = 0;
+			if (motifRegsO instanceof Integer)
+				num = ((Integer)motifRegsO).intValue();
+			else if (motifRegsO instanceof String)
+				num = Integer.parseInt((String)motifRegsO);
+			
+			for (int i = 0; i < num; i++) {
+				if (nmicaMotif.getAnnotation().containsProperty("motifregion" + i)) {
+					Object annValue = nmicaMotif.getAnnotation().getProperty("motifregion" + i);
+					if (annValue instanceof String) {
+						String ann = (String)annValue;
+						
+						String name = null;
+						String type = null;
+						boolean selected = false;
+						int setId = 0;
+						int begin = 0;
+						int length = 0;
+						
+						System.out.println(ann);
+						Matcher nameMatcher = NAME_PATTERN.matcher(ann);
+						Matcher typeMatcher = TYPE_PATTERN.matcher(ann);
+						Matcher selectedMatcher = SELECTED_PATTERN.matcher(ann);
+						Matcher setIdMatcher = SET_ID_PATTERN.matcher(ann);
+						Matcher beginMatcher = BEGIN_PATTERN.matcher(ann);
+						Matcher lengthMatcher = LENGTH_PATTERN.matcher(ann);
+						
+						if (nameMatcher.find())
+							name = nameMatcher.group(1);
+						else {
+							System.err.println("WARN: name was not found for region " + i);
+							name = "";
+						}
+						if (typeMatcher.find())
+							type = typeMatcher.group(1);
+						else System.err.println("WARN: type was not found for region " + i);
+						if (selectedMatcher.find())
+							selected = Boolean.parseBoolean(selectedMatcher.group(1));
+						else System.err.println("WARN: selection state was not found for region " + i);
+						if (setIdMatcher.find())
+							setId = Integer.parseInt(setIdMatcher.group(1));
+						else System.err.println("WARN: setId was not found for region " + i);
+						if (beginMatcher.find())
+							begin = Integer.parseInt(beginMatcher.group(1));
+						else System.err.println("WARN: beginning position was not found for region " + i);
+						if (lengthMatcher.find())
+							length = Integer.parseInt(lengthMatcher.group(1));
+						else System.err.println("WARN: length was not found for region " + i);
+						
+						MotifRegion reg;
+						if (type.equals("SelectableMotifRegion")) {
+							SelectableMotifRegion selReg;
+							reg = selReg = new SelectableMotifRegion(this, begin, length);
+							selReg.setAnnotationSetId(setId);
+							selReg.setSelectedRegion(selected);
+						} else if (type.equals("MotifRegion")) {
+							reg = new MotifRegion(this, begin, length);
+						} else throw new IllegalArgumentException("Type \"" + type + "\" is not supported");
+						if (reg != null) {
+							System.out.println("name:" + name);
+							System.out.println("type:" + type);
+							System.out.println("sel :" + selected);
+							System.out.println("set :" + setId);
+							System.out.println("beg :" + begin);
+							System.out.println("len :" + length);
+							reg.setKept(true);
+							reg.setName(name);
+							addRegion(reg);
+						}
+					} else throw new IllegalStateException("Annotation value is not of type String");
+				} else {
+					System.err.println("WARN: missing annotation \"motifregion" + i + "\"");
+				}
+			}
+		}
 	}
     
 	public void updateQMotifAnnotations() {
@@ -149,21 +247,40 @@ public class QMotif extends QObject {
 		ann.setProperty("offset", "" + this.offset);
 		ann.setProperty("isSelected", this.selected ? true : false);
 		ann.setProperty("isHighlighted", this.highlighted ? true : false);
+		
+		//FIXME: Iterater rather than use the list
+		List<Integer>selCols = new ArrayList<Integer>(this.selectedColumns);
+		List<Integer>hilitedCols = new ArrayList<Integer>(this.selectedColumns);
 		if (this.selectedColumns != null && this.selectedColumns.size() > 0) {
-			StringBuffer buf = new StringBuffer("" + this.selectedColumns.get(0));
+			StringBuffer buf = new StringBuffer("" + selCols.get(0));
 			int i = 1;
 			while (i < this.selectedColumns.size()) {
-				buf.append("," + this.selectedColumns.get(i));
+				buf.append("," + selCols.get(i++));
 			}
 			ann.setProperty("selectedColumns", buf.toString());
 		}
 		if (this.highlightedColumns != null && this.highlightedColumns.size() > 0) {
-			StringBuffer buf = new StringBuffer("" + this.highlightedColumns.get(0));
+			StringBuffer buf = new StringBuffer("" + hilitedCols.get(0));
 			int i = 1;
 			while (i < this.highlightedColumns.size()) {
-				buf.append("," + this.highlightedColumns.get(i));
+				buf.append("," + hilitedCols.get(i++));
 			}
 			ann.setProperty("highlightedColumns", buf.toString());
+		}
+		
+		if (this.regions != null && this.regions.size() > 0) {
+			int rI = 0;
+			ann.setProperty("motifregions", this.regions.size());
+			for (MotifRegion r : regions) {
+				//example of the value: "type:SelectableMotifRegion;name:tata;selected:true;begin:1;length:2;setId=0"
+				ann.setProperty("motifregion" + rI++,
+										"type:" + r.getClass().getSimpleName() + ";" +
+										"name:" + r.getName() + ";" +
+										"selected:" + r.isSelected() + ";" +
+										"begin:" + r.getBegin() + ";" +
+										"length:" + r.getLength() + ";" +
+										"setId:" + r.getAnnotationSetId());
+			}
 		}
 	}
 
@@ -171,7 +288,7 @@ public class QMotif extends QObject {
     	this(null, m);
     }
     
-    public QMotif(QWidget parent, QMotif qmotif, Motif sampleMotifFromMetaMotif) {
+    public QMotif(LogoView parent, QMotif qmotif, Motif sampleMotifFromMetaMotif) {
 		this(parent, sampleMotifFromMetaMotif);
 		this.linkedQMotif = qmotif;
 	}
@@ -185,8 +302,8 @@ public class QMotif extends QObject {
 			QDistribution qdist = new QDistribution(this,dist);
 			dists.add(qdist);
     	}
-    	selectedColumns = new ArrayList<Integer>();
-    	highlightedColumns = new ArrayList<Integer>();
+    	selectedColumns = new TreeSet<Integer>();
+    	highlightedColumns = new TreeSet<Integer>();
     	this.dists = dists;
     }
     
@@ -248,10 +365,10 @@ public class QMotif extends QObject {
 	
 	}
 
-	public static List<QMotif> create(QWidget qobj, List<Motif> motifs) {
+	public static List<QMotif> create(LogoView logoView, List<Motif> motifs) {
 		List<QMotif> qmotifs = new ArrayList<QMotif>();
 		for (Motif m : motifs)
-			qmotifs.add(new QMotif(qobj,m));
+			qmotifs.add(new QMotif(logoView,m));
 		return qmotifs;
 	}
 	
@@ -259,16 +376,16 @@ public class QMotif extends QObject {
 		return create(null, motifs);
 	}
 
-	public static List<QMotif> create(QWidget qobj, Motif[] motifs) {
+	public static List<QMotif> create(LogoView logoView, Motif[] motifs) {
 		List<QMotif> qms = new ArrayList<QMotif>();
 		
 		for (Motif m : motifs)
-			qms.add(new QMotif(qobj,m));
+			qms.add(new QMotif(logoView,m));
 		
 		return qms;
 	}
 
-	public static List<QMotif> create(Motif[] motifs) {
+	public static List<QMotif> motifsToQMotifs(Motif[] motifs) {
 		return create(null, motifs);
 	}
 	
@@ -289,35 +406,38 @@ public class QMotif extends QObject {
 	/**
 	 * @return the highlightedColumns
 	 */
-	public List<Integer> getHighlightedColumns() {
+	public SortedSet<Integer> getHighlightedColumns() {
 		return highlightedColumns;
 	}
 
 	/**
 	 * @param highlightedColumns the highlightedColumns to set
 	 */
-	public void setHighlightedColumns(List<Integer> highlightedColumns) {
+	public void setHighlightedColumns(TreeSet<Integer> highlightedColumns) {
 		this.highlightedColumns = highlightedColumns;
 	}
 
 	public Dirichlet[] getSelectedDirichletColumns() {
 		Dirichlet[] selections  = new Dirichlet[selectedColumns.size()];
 		
-		for (int i = 0; i < selectedColumns.size(); i++) {
-			selections[i] = this.getMetaMotif().getColumn(
-					selectedColumns.get(i).intValue());
-		}
+		int selI = 0;
+		for (Integer i : selectedColumns)
+			selections[selI++] = this.getMetaMotif().getColumn(i);
 			
 		return selections;
 	}
 	
 	public Distribution[] getSelectedColumns() {
 		Distribution[] selections  = new Distribution[selectedColumns.size()];
-		
-		for (int i = 0; i < selectedColumns.size(); i++)
-			selections[i] = this.getNmicaMotif().getWeightMatrix().getColumn(
-					selectedColumns.get(i).intValue());
-		
+		System.out.println("sels:" + selections.length);
+		System.out.println("wm  :" + this.getNmicaMotif().getWeightMatrix().columns());
+		int selI = 0;
+		for (Integer i : selectedColumns) {
+			System.out.println("i :" + i);
+			System.out.println("selI:" + selI);
+			selections[selI++] = this.getNmicaMotif().getWeightMatrix().getColumn(i);
+		}
+			
 		return selections;
 	}
 
@@ -399,7 +519,7 @@ public class QMotif extends QObject {
 	}
 	
 	public void toggleColumnSelected(int column) {
-		this.setColumnHighlighted(column,!columnIsHighlighted(column));
+		this.setColumnSelected(column,!columnIsSelected(column));
 	}
 	
 	public boolean columnIsHighlighted(int column) {
@@ -419,29 +539,28 @@ public class QMotif extends QObject {
 		this.setColumnHighlighted(column,!columnIsHighlighted(column));
 	}
 
-	public QMotifBoundingBox getBoundingBox() {
+	public MotifBoundingBox getBoundingBox() {
 		return this.boundingBox;
 	}
 
-	public void setBoundingBox(QMotifBoundingBox motifBoundingBox) {
+	public void setBoundingBox(MotifBoundingBox motifBoundingBox) {
 		this.boundingBox = motifBoundingBox;
 	}
 
 	public QMotif[] sampleMotifsFromMetaMotif(QMotif motif,
 			String string, int sampleNum) {
-		if (!motif.isMetaMotif()) throw new IllegalArgumentException("");
+		if (!motif.isMetaMotif()) throw new IllegalArgumentException("The input QMotif is not a metamotif");
 		QMotif[] qms = new QMotif[sampleNum];
 		for (int i = 0; i < sampleNum; i++) {
-			qms[i] = new QMotif((QWidget)motif.parent(), motif, MetaMotifSimulator.sampleMotifFromMetaMotif(
+			qms[i] = new QMotif((LogoView)motif.parent(), motif, 
+								MetaMotifSimulator.sampleMotifFromMetaMotif(
 								motif.getMetaMotif(), "" + i));}
-		
 		return qms;
 	}
 
-
 	public static List<Motif> qmotifsToMotifs(List<QMotif> qmotifs) {
 		List<Motif> motifs = new ArrayList<Motif>();
-		for (int i = 0; i < motifs.size(); i++) {
+		for (int i = 0; i < qmotifs.size(); i++) {
 			qmotifs.get(i).updateQMotifAnnotations(); //need to sync the XMS annotations before writing
 			motifs.add(qmotifs.get(i).getNmicaMotif());
 		}
@@ -449,17 +568,74 @@ public class QMotif extends QObject {
 	}
 
 	
-	public void addAnnotatedRegion(ScoredAnnotatedRegion ar) {
-		((LogoView)this.parent()).scene().addItem(ar);
-		annotatedRegions.add(ar);
-		((LogoView)this.parent()).update();
-		((LogoView)this.parent()).repaint();
+	public void addRegion(MotifRegion ar) {
+		LogoView view = null;
+		if (this.parent() != null)
+			view = (LogoView)this.parent();
 		
-		if (this.boundingBox != null)
+		if (view != null && view.scene() != null) { 
+			view.scene().addItem(ar);
+		} else {System.out.println("View scene is null when adding " + ar.getName());}
+		
+		regions.add(ar);
+		if (this.boundingBox != null) 
 			ar.setParentItem(this.boundingBox);
-		else {
-			System.out.println();
-		}
+		else {System.out.println("Bounding box is null when adding " + ar.getName());}
+		
+		ar.updateLocation();
+		if (view != null)
+			view.repaint();
+	}
+	
+	public int regions() {
+		return this.regions.size();
+	}
+	
+	public MotifRegion getRegion(int i) {
+		return this.regions.get(i);
+	}
+	
+	public void removeRegions(MotifRegion... mreg) {
+		for (MotifRegion mr : mreg)
+			mr.removeFromScene();
+		
+		this.regions.removeAll(Arrays.asList(mreg));
 	}
 
+	public Set<Integer> getSelectedColumnIndices() {
+		return new TreeSet<Integer>(selectedColumns);
+	}
+
+	public int overlappingRegions(int begin, int length) {
+		int maxOverlaps = 0;
+		for (int i = 0; i < length; i++) {
+			int overlapsAtThisPos = 0;
+			for (MotifRegion reg : this.regions) {
+				int regBegin = reg.getBegin();
+				int regEnd = (reg.getBegin() + reg.getLength() - 1);
+				int thisBegin = i+begin;
+				int thisEnd = (i+begin+length - 1);
+				
+				boolean beginsBeforeOrAt = regBegin <= thisBegin;
+				boolean endsAtOrAfter = regEnd >= thisEnd;
+				
+				boolean endsBeforeOrAtBeginOf = thisEnd <= regBegin;
+				boolean beginsBeforeEndOf = thisBegin <= regEnd;
+				if ((beginsBeforeOrAt && endsAtOrAfter) ||
+					(endsBeforeOrAtBeginOf || beginsBeforeEndOf))
+					overlapsAtThisPos++;
+			}
+			if (overlapsAtThisPos > maxOverlaps)
+				maxOverlaps = overlapsAtThisPos;
+		}
+		return maxOverlaps;
+	}
+	
+	public void setColor(QColor color) {
+		this.color = color;
+	}
+	
+	public QColor color() {
+		return this.color;
+	}
 }

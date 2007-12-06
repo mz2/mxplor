@@ -5,12 +5,11 @@ import uk.ac.sanger.motifxplorer.ui.widget.DistributionItemIface;
 
 import com.trolltech.qt.core.QRectF;
 import com.trolltech.qt.core.Qt;
+
 import com.trolltech.qt.gui.QBrush;
 import com.trolltech.qt.gui.QColor;
-import com.trolltech.qt.gui.QGraphicsItemInterface;
 import com.trolltech.qt.gui.QGraphicsRectItem;
-import com.trolltech.qt.gui.QGraphicsScene;
-import com.trolltech.qt.gui.QMouseEvent;
+import com.trolltech.qt.gui.QGraphicsSceneMouseEvent;
 import com.trolltech.qt.gui.QPen;
 
 public class BoundaryItem extends QGraphicsRectItem implements DistributionItemIface {
@@ -38,77 +37,34 @@ public class BoundaryItem extends QGraphicsRectItem implements DistributionItemI
 		
 	}
 	
-	private void commonInit() {
-		setBrush(normalBrush);
-		setPen(normalPen);
-		setAcceptsHoverEvents(true);
-		dist.setBoundItem(this);
+	public void mousePressEvent(QGraphicsSceneMouseEvent event) {
+		if (!event.modifiers().isSet(Qt.KeyboardModifier.ControlModifier))
+			getDist().toggleSelected();
+		
+		super.mousePressEvent(event);
 	}
 	
-	public BoundaryItem() {
-		super();
-		commonInit();
-	}
-
-	public BoundaryItem(QDistribution dist, QGraphicsItemInterface arg0) {
-		super(arg0);
-		this.dist = dist;
-		commonInit();
-	}
-
 	public BoundaryItem(QDistribution dist, QRectF arg0) {
 		super(arg0);
 		this.dist = dist;
-		commonInit();
-	}
-
-	public BoundaryItem(QDistribution dist, QPrivateConstructor arg0) {
-		super(arg0);
-		this.dist = dist;
-		commonInit();
-	}
-
-	public BoundaryItem(QDistribution dist, QGraphicsItemInterface arg0, QGraphicsScene arg1) {
-		super(arg0, arg1);
-		this.dist = dist;
-		commonInit();
-	}
-
-	public BoundaryItem(QDistribution dist, QRectF arg0, QGraphicsItemInterface arg1) {
-		super(arg0, arg1);
-		this.dist = dist;
-		commonInit();
-	}
-
-	public BoundaryItem(QDistribution dist, QRectF arg0, QGraphicsItemInterface arg1,
-			QGraphicsScene arg2) {
-		super(arg0, arg1, arg2);
-		this.dist = dist;
-		commonInit();
-	}
-
-	public BoundaryItem(QDistribution dist, double arg0, double arg1, double arg2, double arg3) {
-		super(arg0, arg1, arg2, arg3);
-		this.dist = dist;
-	}
-
-	public BoundaryItem(QDistribution dist, double arg0, double arg1, double arg2, double arg3,
-			QGraphicsItemInterface arg4) {
-		super(arg0, arg1, arg2, arg3, arg4);
-		this.dist = dist;
-		commonInit();
-	}
-
-	public BoundaryItem(QDistribution dist, double arg0, double arg1, double arg2, double arg3,
-			QGraphicsItemInterface arg4, QGraphicsScene arg5) {
-		super(arg0, arg1, arg2, arg3, arg4, arg5);
-		this.dist = dist;
-		commonInit();
+		setBrush(normalBrush);
+		setPen(normalPen);
+		if (dist.motif().isSample()) {
+			setAcceptsHoverEvents(false);
+			setAcceptedMouseButtons(new Qt.MouseButtons(Qt.MouseButton.NoButton));
+		} else {
+			setAcceptsHoverEvents(true);
+			setAcceptedMouseButtons(new Qt.MouseButtons(
+												Qt.MouseButton.LeftButton,
+												Qt.MouseButton.RightButton));
+		}
+		dist.setBoundItem(this);
 	}
 
 	public QDistribution getDist() {
 		return dist;
 	}
+	
 	
 	public void selectionStateUpdated() {
 		if (dist.isSelected()) {

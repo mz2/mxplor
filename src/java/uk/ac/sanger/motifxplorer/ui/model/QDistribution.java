@@ -238,4 +238,7 @@ public class QDistribution extends QObject {
 		this.symbolItems = symbolItems;
 	}
 	
+	public QMotif motif() {
+		return (QMotif)this.parent();
+	}
 }

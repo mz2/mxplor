@@ -33,45 +33,11 @@ public class SymbolGraphicsItem extends QGraphicsPathItem implements Distributio
 		
 			
 	}
-	
-	private void commonInit(boolean acceptsHover) {
-		//setBrush(normalBrush);
-		setAcceptsHoverEvents(acceptsHover);
-		if (acceptsHover) {
-			setAcceptedMouseButtons(new Qt.MouseButtons(Qt.MouseButton.RightButton, Qt.MouseButton.LeftButton));
-			setEnabled(true);
-		} else {
-			setAcceptedMouseButtons(new Qt.MouseButtons(Qt.MouseButton.NoButton));
-			setEnabled(false);
-		}
-	}
-	
-	public void mousePressEvent(QGraphicsSceneMouseEvent event) {
-		System.out.println("SymbolGraphicsItem received a mouse press event!");
-	}
 
-	public SymbolGraphicsItem(boolean acceptsHover) {
-		super();
-		commonInit(acceptsHover);
-	}
-
-	public SymbolGraphicsItem(QDistribution dist, QGraphicsItemInterface arg0, boolean acceptsHover) {
+	public SymbolGraphicsItem(QDistribution dist, QPainterPath arg0) {
 		super(arg0);
 		this.dist = dist;
-		commonInit(acceptsHover);
-	}
-
-	public SymbolGraphicsItem(QDistribution dist, QPainterPath arg0, boolean acceptsHover) {
-		super(arg0);
-		this.dist = dist;
-		commonInit(acceptsHover);
-	}
-
-	public SymbolGraphicsItem(QDistribution dist, QPainterPath arg0,
-			QGraphicsItemInterface arg1, boolean acceptsHover) {
-		super(arg0, arg1);
-		this.dist = dist;
-		commonInit(acceptsHover);
+		//commonInit(acceptsHover);
 	}
 
 	public QDistribution getDist() {

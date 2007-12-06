@@ -33,7 +33,8 @@ public class ReverseComplementCommand extends QUndoCommand {
 			motif.setupDists();
 			if (motif.parent() instanceof LogoView) {
 				LogoView parentWidget = (LogoView)motif.parent();
-				parentWidget.setUpLogo(motif);
+				//parentWidget.setUpLogo(motif);
+				parentWidget.setMotif(motif);
 				parentWidget.repaint();
 			}
 		}

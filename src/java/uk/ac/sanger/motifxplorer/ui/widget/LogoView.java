@@ -20,9 +20,9 @@ import org.biojava.bio.dist.Distribution;
 import org.biojava.bio.seq.io.SymbolTokenization;
 import org.biojava.bio.symbol.IllegalSymbolException;
 
-import uk.ac.sanger.motifxplorer.ui.graphics.AnnotatedRegion;
+import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegion;
 import uk.ac.sanger.motifxplorer.ui.graphics.BoundaryItem;
-import uk.ac.sanger.motifxplorer.ui.graphics.QMotifBoundingBox;
+import uk.ac.sanger.motifxplorer.ui.graphics.MotifBoundingBox;
 import uk.ac.sanger.motifxplorer.ui.graphics.SymbolGraphicsItem;
 import uk.ac.sanger.motifxplorer.ui.model.QDistribution;
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
@@ -90,7 +90,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	private QPainterPath pathA,pathC,pathG,pathT;
 	private QRectF rectA,rectC,rectG,rectT;
 	
-	private List<AnnotatedRegion> regions = new ArrayList<AnnotatedRegion>();
+	private List<MotifRegion> regions = new ArrayList<MotifRegion>();
 	
 	
 	//private double maxHeight = DEFAULT_HEIGHT;
@@ -278,25 +278,28 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		maxSymWidth = Math.max(maxSymWidth, rectT.width());
 	}
 
-	//TODO: Rethink this. Not too general. Should give an interface as an argument instead
+	//TODO: Should give an interface as an argument instead
 	
-	public void setUpLogo(QMotif qm) {setUpLogo(qm, true);}
-	
-	public void setUpLogo(QMotif qm, boolean show) {
-		//this.removeDistributionGraphicsItems();
+	private void setUpLogo(QMotif qm) {
 		double blockWidth = this.blockWidth();
 		
-		boolean isSample = qm.getLinkedQMotif() != null;
+		boolean isSample = qm.isSample();
 		boolean includeBounds = !isSample;
-		
-		QMotifBoundingBox boundingBox;
+		MotifBoundingBox boundingBox;
 		
 		if (isSample)
 			boundingBox = qm.getLinkedQMotif().getBoundingBox();
-		else
-			qm.setBoundingBox(boundingBox = new QMotifBoundingBox(qm));
+		else {
+			qm.setBoundingBox(boundingBox = new MotifBoundingBox(qm));
+		}
+		
+		if (qm.getBoundingBox() != null) {
+			qm.getBoundingBox().setVisible(true);
+			qm.getBoundingBox().setEnabled(true);
+		}
 		
 		if (!scene().items().contains(boundingBox)) scene().addItem(boundingBox);
+		
 		
         for (int i = 0; i < qm.getDists().size(); i++) {
     		double base = MOTIF_HEIGHT;
@@ -312,7 +315,6 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 			}
 			
 			double distScale;
-			//if (infoContentScale &! !qm.isMetaMotif() &! isSample)
 			if (infoContentScale)
 				distScale = qdist.getDistScale();
 			else
@@ -328,11 +330,11 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 			
 			BoundaryItem distBoundItem = null;
 			if (includeBounds) {
-				distBoundItem = new BoundaryItem(qdist, new QRectF(new QPointF(
-						x, base - MOTIF_HEIGHT), new QSizeF(blockWidth,
+				distBoundItem = new BoundaryItem(qdist, 
+						new QRectF(new QPointF(x,base - MOTIF_HEIGHT), 
+						new QSizeF(blockWidth,
 						MOTIF_HEIGHT)));
 				qdist.setBoundItem(distBoundItem);
-				//this.scene().addItem(distBoundItem);
 				distBoundItem.setParentItem(boundingBox);
 			}
 			
@@ -378,7 +380,9 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 				
 				//scaling doesn't do too precise job with large scalings, positions need to be finetuned
 				//TODO: Look into this effect more... You sure you're scaling correctly?
-				symItem.setPos(symItem.x() - (symItem.sceneBoundingRect().left() - x), symItem.y() - (symItem.sceneBoundingRect().bottom() - y));
+				symItem.setPos(
+							symItem.x() - (symItem.sceneBoundingRect().left() - x), 
+							symItem.y() - (symItem.sceneBoundingRect().bottom() - y));
 				
 				qdist.getSymbolItems().add(symItem);
 				if (distBoundItem != null)
@@ -396,16 +400,21 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
         
         boundingBox.updateLocation();
         
-        QGraphicsRectItem rect = new QGraphicsRectItem();
+        /*for (int i = 0; i < motif.regions(); i++)
+        	if (motif.getRegion(i).scene() == null)
+        		motif.getRegion(i).updateLocation();*/
+        
+        /*QGraphicsRectItem rect = new QGraphicsRectItem();
 		QDistribution b = motif.dists().get(0);
 		QDistribution e = motif.dists().get(2);
 		
-		scene().addItem(rect);
+		scene().addItem(rect);*/
 	}
 	
 	
 	protected void resizeEvent(QResizeEvent e) {
 		setUpFont();
+		super.resizeEvent(e);
 	}
 	
 	private void setUpBorderAndBackground() {
@@ -431,6 +440,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		this.maxCols = maxCols;
 		this.widgetSize = widgetSize;
 		resize(widgetSize);
+		
 		
 		this.setScene(new QGraphicsScene(new QRectF(0,0,widgetSize.width(),widgetSize.height()), this));
 		QSizeF sceneSize = scene().sceneRect().size();
@@ -479,13 +489,13 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	//FIXME: Don't use strings but Symbols here!
 	public SymbolGraphicsItem pathItemForString(QDistribution dist, String s, boolean acceptsHover) {
 		if (s.equals("A"))
-			return new SymbolGraphicsItem(dist,new QPainterPath(pathA), acceptsHover);
+			return new SymbolGraphicsItem(dist,new QPainterPath(pathA));
 		else if (s.equals("C"))
-			return new SymbolGraphicsItem(dist,new QPainterPath(pathC), acceptsHover);
+			return new SymbolGraphicsItem(dist,new QPainterPath(pathC));
 		else if (s.equals("G"))
-			return new SymbolGraphicsItem(dist,new QPainterPath(pathG), acceptsHover);
+			return new SymbolGraphicsItem(dist,new QPainterPath(pathG));
 		else if (s.equals("T"))
-			return new SymbolGraphicsItem(dist,new QPainterPath(pathT), acceptsHover);
+			return new SymbolGraphicsItem(dist,new QPainterPath(pathT));
 		else return null;
 	}
     
@@ -510,6 +520,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	
 	protected void dragLeaveEvent(QDragLeaveEvent e) {
 		//System.out.println("Drag leave.");
+		super.dragLeaveEvent(e);
 	}
 	
 	protected void dragEnterEvent(QDragEnterEvent e) {
@@ -525,6 +536,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		//MotifIOTools.writeMotifSetXML(, new Motif[] {nmicaMotif.motif});
 		//System.out.println("Drag enter.");
 		
+		super.dragEnterEvent(e);
 	}
 	
 	protected void dragMoveEvent(QDragMoveEvent e) {
@@ -538,6 +550,8 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		} else {
 			e.ignore();
 		}
+		
+		super.dragMoveEvent(e);
 	}
 	
 	//FIXME: Correct the removeItem() issue here
@@ -562,7 +576,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 				//TODO: Support more than one nmicaMotif per drag?
 				//this.removeDistributionGraphicsItems();
 				removeDistributionGraphicsItems();
-				this.setSelected(false);
+				//this.setSelected(false);
 				QMotif newQM = new QMotif(this,motifs[0]);
 				
 				this.setMotif(newQM);
@@ -574,24 +588,27 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 				return;
 			}
 		}
+		super.dropEvent(e);
 	}
 	
 	protected void mouseReleaseEvent(QMouseEvent e) {
-		repaint();
+		//repaint();
+		super.mouseReleaseEvent(e);
 	}
 	
 	protected void toggleSelectionAtPosition(QPoint p) {
 		List<QGraphicsItemInterface>items = items(p);
 		
+		/*
 		for(QGraphicsItemInterface item : items) {
 			if (item != null && item.isEnabled())
 				if (item instanceof DistributionItemIface) {
 					DistributionItemIface gi = (DistributionItemIface)item;
-					gi.getDist().toggleSelected();
-					break;}
+					gi.getDist().toggleSelected(); break;}
 		}
 		
-		update();
+		repaint();*/
+		
 	}
 	
 	protected void toggleHighlightingAtPosition(QPoint p) {
@@ -642,8 +659,14 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		} else {
 			borderItem.setBrush(normalBrush);
 		}
+		super.mouseDoubleClickEvent(e);
 	}
 	
+	/**
+	 * FIXME: Move the event handling across to the graphics item views
+	 * 
+	 * @see com.trolltech.qt.gui.QGraphicsView#mousePressEvent(com.trolltech.qt.gui.QMouseEvent)
+	 */
 	protected void mousePressEvent(QMouseEvent e) {
 		dragStartPosition = e.pos();
 		setFocus();
@@ -665,46 +688,48 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 				qd.selectionStateUpdated();
 			
 		} else {
-			toggleSelectionAtPosition(e.pos());
+			//toggleSelectionAtPosition(e.pos());
 		}
 		lastSelectedColumn = column;
 		lastSelectedItem = item;
 		
-		repaint();
+		super.mousePressEvent(e);
 	}
 	
+	/*
 	public void toggleIsSelected() {
 		this.isSelected = !this.isSelected;
-	}
+	}*/
 	
 	
 	/**
 	 * @return the isInFocus
 	 */
+	/*
 	public boolean isInFocus() {
 		return isInFocus;
-	}
+	}*/
 
 	/**
 	 * @param isInFocus the isInFocus to set
 	 */
-	public void setInFocus(boolean isInFocus) {
+	/*public void setInFocus(boolean isInFocus) {
 		this.isInFocus = isInFocus;
-	}
+	}*/
 
 	/**
 	 * @return the isSelected
 	 */
-	public boolean isSelected() {
+	 /*public boolean isSelected() {
 		return isSelected;
-	}
+	}*/
 
 	/**
 	 * @param isSelected the isSelected to set
 	 */
-	public void setSelected(boolean isSelected) {
+	/*public void setSelected(boolean isSelected) {
 		this.isSelected = isSelected;
-	}
+	}*/
 
 	/**
 	 * @return the lastSelectedColumn
@@ -759,6 +784,8 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 				System.err.println("Nothing was written to the stream!");
 			}
 		}
+		
+		super.mouseMoveEvent(e);
 	}
 	
 	protected int wmColumn(QPoint p) {
@@ -789,19 +816,20 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 			else if (Qt.Key.resolve(e.key()) == Qt.Key.Key_Right)
 				moveToRight();
 		}
+		
+		super.keyPressEvent(e);
 	}
 	
 	protected void enterEvent(QEvent e) {
-		isInFocus = true;
 		borderItem.setPen(borderHighlightPen);
 		
-		this.repaint();
+		super.enterEvent(e);
 	}
 	
 	protected void leaveEvent(QEvent e) {
-		isInFocus = false;
 		borderItem.setPen(borderNormalPen);
-		this.repaint();
+		
+		super.leaveEvent(e);
 	}
 	
 	/*
@@ -827,45 +855,23 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	public void moveBy(int i) {
 		motif.moveToLeft();
 		for (QGraphicsItemInterface item : items())
-			if (item instanceof QMotifBoundingBox)
+			if (item instanceof MotifBoundingBox)
 				item.moveBy(blockWidth() * i, 0);
 		repaint();
 	}
 	
+	/*
 	private void toggleHighlightingForSelectedColumns() {
 		
 	}
 	
 	private void removeSelectedColumns() {
 		
-	}
+	}*/
 	
 
 	public void paint(QPainter painter) {
 		painter.setRenderHint(QPainter.RenderHint.Antialiasing);
-		
-		//drawBorders(painter, palette());
-		
-		/*
-		if (motif != null) {
-			motif.paint(painter, 
-					rect(), 
-					palette(), 
-					QMotif.DrawingStyle.TEXT_LOGO, 
-					QMotif.EditState.READ_WRITE, maxCols);
-		} else {
-			painter.setFont(new QFont("Arial",50));
-			painter.drawText(rect(), Qt.AlignmentFlag.AlignCenter.ordinal(), "Drag motif here");
-		}
-		*/
-	}
-	
-	protected boolean isWithinUpperDropArea(QPoint point) {
-		return false;
-	}
-	
-	protected boolean isWithinLowerDropArea(QPoint point) {
-		return false;
 	}
 	
 	/*
@@ -921,7 +927,6 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 					for (int i=0; i < qmotifs.length; i++)
 						setUpLogo(qmotifs[i]);
 				}
-				this.setUpLogo(motif);
 		}
 		else
 			emptyScene();
@@ -981,5 +986,8 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		
 		return null;
 	}
-
+	
+	public QGraphicsPathItem getBorderItem() {
+		return this.borderItem;
+	}
 }
