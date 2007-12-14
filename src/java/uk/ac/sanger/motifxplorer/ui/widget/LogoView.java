@@ -20,9 +20,9 @@ import org.biojava.bio.dist.Distribution;
 import org.biojava.bio.seq.io.SymbolTokenization;
 import org.biojava.bio.symbol.IllegalSymbolException;
 
-import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegion;
 import uk.ac.sanger.motifxplorer.ui.graphics.BoundaryItem;
 import uk.ac.sanger.motifxplorer.ui.graphics.MotifBoundingBox;
+import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegion;
 import uk.ac.sanger.motifxplorer.ui.graphics.SymbolGraphicsItem;
 import uk.ac.sanger.motifxplorer.ui.model.QDistribution;
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
@@ -67,6 +67,8 @@ import com.trolltech.qt.gui.QSizePolicy;
 import com.trolltech.qt.gui.QWidget;
 
 public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget {
+	private static final int EXTRA_PADDING = 0;
+	private static final int PADDING = 1;
 	private static final int SAMPLE_NUM = 50;
 	private static final int HIGHLIGHT_PEN_WIDTH = 2;
 	private static final double NORMAL_PEN_WIDTH = 1.0;
@@ -91,6 +93,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	private QRectF rectA,rectC,rectG,rectT;
 	
 	private List<MotifRegion> regions = new ArrayList<MotifRegion>();
+	private MotifLabelLineEdit lineEdit;
 	
 	
 	//private double maxHeight = DEFAULT_HEIGHT;
@@ -100,13 +103,13 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	public static final int MOTIF_WIDTH = 550;
 	
 	private static final QPen borderNormalPen = new QPen(
-													new QColor(40,40,100),
-													2.5,
+													new QColor(100,100,255),
+													1.0,
 													Qt.PenStyle.SolidLine,
 													Qt.PenCapStyle.RoundCap,
 													Qt.PenJoinStyle.RoundJoin);
 	private static final QPen borderHighlightPen = new QPen(
-													new QColor(100,100,200),
+													new QColor(200,200,255),
 													2.5,
 													Qt.PenStyle.SolidLine,
 													Qt.PenCapStyle.RoundCap,
@@ -131,8 +134,8 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	//private static final QBrush selectedBrush = new QBrush(new QColor(255,255,100,100));
 	
 
-	private static final QPen normalPenBrush = new QPen(new QColor(255,255,50));
-	private static final QPen selectedPenBrush = new QPen(new QColor(100,100,255));
+	//private static final QPen normalPenBrush = new QPen(new QColor(255,255,50));
+	//private static final QPen selectedPenBrush = new QPen(new QColor(100,100,255));
 	
 	static {
 		normalBrushGrad = new QLinearGradient(0,0,0,MOTIF_WIDTH);
@@ -147,6 +150,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		selectedBrush = new QBrush(hiliteBrushGrad);
 	}
 	
+	//FIXME: Use DNATools.a(), c(), g(), t(), if not something even more general
 	static {
 		int opacity = 200;
 		normalColours.put("A", new QColor(0,255,0,opacity));
@@ -216,7 +220,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	private double maxSymWidth;
 	private QSize widgetSize;
 	
-	private QGraphicsPathItem borderItem;
+	private QGraphicsRectItem borderItem;
 	/*
 	private QPen borderFocusItem = new QPen();
 	private QGraphicsPathItem dragInfoTextItem;
@@ -231,6 +235,44 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	
 	
 	
+	public LogoView(QWidget parent, QSize widgetSize, QMotif m, int maxCols, int xOffset, boolean infoContentScale) {
+		super(parent);
+		setParent(parent);
+		this.infoContentScale = infoContentScale;
+		this.maxCols = maxCols;
+		this.widgetSize = widgetSize;
+		resize(widgetSize);
+		
+		this.setScene(
+			new QGraphicsScene(
+				new QRectF(0,0,widgetSize.width(),widgetSize.height()), this));
+		
+		setResizeAnchor(QGraphicsView.ViewportAnchor.NoAnchor);
+		setTransformationAnchor(QGraphicsView.ViewportAnchor.NoAnchor);
+		//scene().setSceneRect(0, 0, widgetSize.width(), widgetSize.height());
+
+		setRenderHint(QPainter.RenderHint.Antialiasing);
+		setFrameStyle(QFrame.Shape.VLine.value());
+		setFocusPolicy(Qt.FocusPolicy.ClickFocus);
+		setAutoFillBackground(false);
+		
+		setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed);
+		//scene().setSceneRect(new QRectF(rect()));		
+		setUpFont();
+		this.xOffset = xOffset;
+		
+		setUpSymbolPainterPaths();
+		setUpBorderAndBackground();
+		
+		//always use the setter for motifs!
+		setMotif(m);
+		this.setMouseTracking(true);
+		setMouseTracking(true);
+		setAcceptDrops(true);
+		
+	}
+
+
 	private void setUpFont() {
 		this.font = new QFont("Arial", 1);
 		//this.infoFont = new QFont("Arial", 30);
@@ -293,16 +335,18 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 			qm.setBoundingBox(boundingBox = new MotifBoundingBox(qm));
 		}
 		
-		if (qm.getBoundingBox() != null) {
+		if (!isSample) {
 			qm.getBoundingBox().setVisible(true);
 			qm.getBoundingBox().setEnabled(true);
 		}
 		
-		if (!scene().items().contains(boundingBox)) scene().addItem(boundingBox);
+		if (!scene()
+				.items().contains(boundingBox)) 
+					scene().addItem(boundingBox);
 		
 		
         for (int i = 0; i < qm.getDists().size(); i++) {
-    		double base = MOTIF_HEIGHT;
+    		double base = MOTIF_HEIGHT - PADDING;
     		
 			QDistribution qdist = qm.getDists().get(i);
 			Distribution dist = qdist.getDist();
@@ -315,18 +359,16 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 			}
 			
 			double distScale;
-			if (infoContentScale)
-				distScale = qdist.getDistScale();
-			else
-				distScale = 1;
+			if (infoContentScale) distScale = qdist.getDistScale();
+			else distScale = 1;
 			
-			double totDistHeight = MOTIF_HEIGHT * distScale;
+			double totDistHeight = (size().height() - 2*PADDING - 2*EXTRA_PADDING)  * distScale;
 			
-			double accumHeightOffsetFromBottom = 0.0;
-			double accumHeight = 0.0;
+			double accumHeightOffsetFromBottom = PADDING + EXTRA_PADDING;
+			double accumHeight = PADDING;
 			double accumHeightAlt = 0.0;
 			
-			double x = i * blockWidth * 1;
+			double x = PADDING + EXTRA_PADDING + i * blockWidth * 1;
 			
 			BoundaryItem distBoundItem = null;
 			if (includeBounds) {
@@ -336,6 +378,8 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 						MOTIF_HEIGHT)));
 				qdist.setBoundItem(distBoundItem);
 				distBoundItem.setParentItem(boundingBox);
+				
+				//if (isSample) distBoundItem.setEnabled(false);
 			}
 			
 			for(Iterator it = qdist.getInfo().iterator(); it.hasNext();) {
@@ -384,6 +428,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 							symItem.x() - (symItem.sceneBoundingRect().left() - x), 
 							symItem.y() - (symItem.sceneBoundingRect().bottom() - y));
 				
+				
 				qdist.getSymbolItems().add(symItem);
 				if (distBoundItem != null)
 					symItem.setParentItem(distBoundItem);
@@ -399,74 +444,35 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		}
         
         boundingBox.updateLocation();
-        
-        /*for (int i = 0; i < motif.regions(); i++)
-        	if (motif.getRegion(i).scene() == null)
-        		motif.getRegion(i).updateLocation();*/
-        
-        /*QGraphicsRectItem rect = new QGraphicsRectItem();
-		QDistribution b = motif.dists().get(0);
-		QDistribution e = motif.dists().get(2);
-		
-		scene().addItem(rect);*/
 	}
 	
-	
 	protected void resizeEvent(QResizeEvent e) {
-		setUpFont();
-		super.resizeEvent(e);
+		//setUpFont();
+		System.out.println(e.size().width());
+		System.out.println(this.rect().width());
+		System.out.println();
+		//borderItem.rect().setWidth(e.size().width());
+		borderItem.setRect(new QRectF(PADDING, 
+									  PADDING,
+									  e.size().width() - PADDING - EXTRA_PADDING,
+									  e.size().height() - PADDING - EXTRA_PADDING));
+		//borderItem.setPos(0,0);
+		//super.resizeEvent(e);
 	}
 	
 	private void setUpBorderAndBackground() {
-		QPainterPath borderPath = new QPainterPath();
-		borderPath.addRoundRect(new QRectF(this.rect()), 10);
-		borderItem = new QGraphicsPathItem(borderPath);
+		borderItem = new QGraphicsRectItem(
+							new QRectF(PADDING, 
+							  PADDING,
+							  size().width() - PADDING,
+							  size().height() - PADDING));
 		
 		borderItem.setPen(borderNormalPen);
 		borderItem.setBrush(normalBrush);
 		scene().addItem(borderItem);
 		borderItem.setZValue(0);
-		/*dragInfoTextPath = new QPainterPath();
-		dragInfoTextPath.addText(new QPointF(rect().bottomLeft()), infoFont, "Drag here");
-		dragInfoTextItem = new QGraphicsPathItem(dragInfoTextPath);
-		dragInfoTextItem.setBrush(palette().dark());
-		scene().addItem(dragInfoTextItem);*/
 	}
 	
-	public LogoView(QWidget parent, QSize widgetSize, QMotif m, int maxCols, int xOffset, boolean infoContentScale) {
-		super(parent);
-		setParent(parent);
-		this.infoContentScale = infoContentScale;
-		this.maxCols = maxCols;
-		this.widgetSize = widgetSize;
-		resize(widgetSize);
-		
-		
-		this.setScene(new QGraphicsScene(new QRectF(0,0,widgetSize.width(),widgetSize.height()), this));
-		QSizeF sceneSize = scene().sceneRect().size();
-		
-		setRenderHint(QPainter.RenderHint.Antialiasing);
-		setFrameStyle(QFrame.Shape.VLine.value());
-		setFocusPolicy(Qt.FocusPolicy.ClickFocus);
-		setAutoFillBackground(false);
-		
-		setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed);
-		scene().setSceneRect(new QRectF(rect()));
-		
-		
-		setUpFont();
-		this.xOffset = xOffset;
-		
-		setUpSymbolPainterPaths();
-		setUpBorderAndBackground();
-		
-		//always use the setter for motifs!
-		setMotif(m);
-		this.setMouseTracking(true);
-		setMouseTracking(true);
-		setAcceptDrops(true);
-		
-	}
 	public void setPenAndBrush(String s, QAbstractGraphicsShapeItem qg, int opacity) {
 		QColor brushColor = new QColor(normalBrushes.get(s).color());
 		QColor penColor = normalPens.get(s).color();
@@ -514,10 +520,109 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 			
 			return size;
 		}*/
-		return widgetSize;
+		return new QSize((int)MOTIF_WIDTH,(int)MOTIF_HEIGHT);
 	}
 	
 	
+	/**
+	 * FIXME: Move the event handling across to the graphics item views
+	 * 
+	 * @see com.trolltech.qt.gui.QGraphicsView#mousePressEvent(com.trolltech.qt.gui.QMouseEvent)
+	 */
+	protected void mousePressEvent(QMouseEvent e) {
+		dragStartPosition = e.pos();
+		setFocus();
+		int column = wmColumn(e.pos());
+		DistributionItemIface item = itemAtPosition(e.pos());
+		
+		if (e.modifiers().isSet(Qt.KeyboardModifier.ShiftModifier)) {
+			//this.toggleIsSelected();
+			if (lastSelectedColumn <= column) {
+				for (int i = (lastSelectedColumn + 1); i <= column;i++) {
+					toggleSelection(i);
+				}
+			} else {
+				for (int i = column; i <= (lastSelectedColumn - 1);i++) {
+					toggleSelection(i);
+				}
+			}
+			for (QDistribution qd : motif.getDists())
+				qd.selectionStateUpdated();
+			
+		} else {
+			//toggleSelectionAtPosition(e.pos());
+		}
+		lastSelectedColumn = column;
+		lastSelectedItem = item;
+		
+		super.mousePressEvent(e);
+	}
+
+
+	public void mouseDoubleClickEvent(QMouseEvent e) {
+		motif.toggleSelected();
+		if (motif.isSelected()) {
+			borderItem.setBrush(selectedBrush);
+		} else {
+			borderItem.setBrush(normalBrush);
+		}
+		super.mouseDoubleClickEvent(e);
+	}
+
+
+	protected void mouseMoveEvent(QMouseEvent e) {
+		if (motif == null) {
+			super.mouseMoveEvent(e);
+			return;
+		}
+		
+		if (dragStartPosition == null) {
+			super.mouseMoveEvent(e);
+			return;
+		}
+
+		System.out.println("Subst     :" + e.pos().subtract(dragStartPosition).manhattanLength());
+		System.out.println("Start drag:" + QApplication.startDragDistance());
+		
+		if (e.pos().subtract(dragStartPosition).manhattanLength() < QApplication.startDragDistance())
+			return;
+		
+		dragStartPosition = null;
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		
+		try {
+			System.out.println("Will update");
+			motif.updateQMotifAnnotations();
+			MotifIOTools.writeMotifSetXML(outputStream, new Motif[] {motif.getNmicaMotif()});
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		if (outputStream != null) {
+			QDrag drag = new QDrag(this);
+			QMimeData mimeData = new QMimeData();
+			//System.out.println("Byte array size:" + outputStream.size());
+			if (outputStream.size() > 0) {
+				byte[] bytes = outputStream.toByteArray();
+				QByteArray qbytes = new QByteArray(bytes);
+				//System.out.println(qbytes.toString());
+				mimeData.setData("xml/xms", qbytes);
+				drag.setMimeData(mimeData);
+	
+				QPixmap pixmap = new QPixmap(this.size());
+				this.render(pixmap);
+				drag.setPixmap(pixmap);
+				drag.setHotSpot(new QPoint(0,0));
+				drag.exec();
+			} else {
+				//TODO: throw exception here
+				System.err.println("Nothing was written to the stream!");
+			}
+		}
+		
+		super.mouseMoveEvent(e);
+	}
+
+
 	protected void dragLeaveEvent(QDragLeaveEvent e) {
 		//System.out.println("Drag leave.");
 		super.dragLeaveEvent(e);
@@ -525,13 +630,9 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	
 	protected void dragEnterEvent(QDragEnterEvent e) {
 		if (e.mimeData().hasFormat("xml/xms")) {
-			if (e.source() != this) {
-				//System.out.println("Proposed action accepted.");
-				e.acceptProposedAction();
-			} else {
-				e.setDropAction(Qt.DropAction.MoveAction);
-				e.accept();
-			}
+			e.setDropAction(Qt.DropAction.MoveAction);
+			e.acceptProposedAction();
+			
 		}
 		//MotifIOTools.writeMotifSetXML(, new Motif[] {nmicaMotif.motif});
 		//System.out.println("Drag enter.");
@@ -541,13 +642,9 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	
 	protected void dragMoveEvent(QDragMoveEvent e) {
 		if (e.mimeData().hasFormat("xml/xms")) {
-			if (e.source() == this) {
-				e.setDropAction(Qt.DropAction.MoveAction);
-				e.accept();
-			} else {
-				e.acceptProposedAction();
-			}
-		} else {
+			e.setDropAction(Qt.DropAction.MoveAction);
+			e.acceptProposedAction();
+		} else{
 			e.ignore();
 		}
 		
@@ -556,31 +653,45 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	
 	//FIXME: Correct the removeItem() issue here
 	protected void dropEvent(QDropEvent e) {
-		if (e.source() instanceof LogoView) {
-			LogoView sourceWidget = ((LogoView)e.source());
-			sourceWidget.removeDistributionGraphicsItems();
-			sourceWidget.setMotif(this.motif);
+		if (e.source() == this) {
+			e.ignore();
+			super.dropEvent(e);
+			return;
 		}
+		
+		
 		
 		if (e.mimeData().hasFormat("xml/xms")) {
 			QMimeData mime = e.mimeData();
 			QByteArray data = mime.data("xml/xms");
-
+			if (e.source() instanceof LogoView) {
+				LogoView sourceWidget = ((LogoView)e.source());
+				QMotif oldSourceMotif = sourceWidget.getMotif();
+				sourceWidget.removeDistributionGraphicsItems();
+				sourceWidget.setMotif(this.motif);
+				if (this.parent() instanceof LabelledLogoView && 
+						e.source().parent() instanceof LabelledLogoView) {	
+						LabelledLogoView srcLLV = (LabelledLogoView) e.source().parent();
+						srcLLV.getMotifLabelLineEdit().setMotif(this.motif);
+						
+				}
+			}
 			Motif[] motifs = null;
 			try {
-				motifs = MotifIOTools.loadMotifSetXML(new ByteArrayInputStream(data.toByteArray()));
+				motifs = MotifIOTools
+							.loadMotifSetXML(
+								new ByteArrayInputStream(data.toByteArray()));
+				
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
 			if ((motifs != null) && (motifs.length > 0)) {
-				//TODO: Support more than one nmicaMotif per drag?
-				//this.removeDistributionGraphicsItems();
 				removeDistributionGraphicsItems();
-				//this.setSelected(false);
 				QMotif newQM = new QMotif(this,motifs[0]);
 				
 				this.setMotif(newQM);
-				//this.setUpLogo(newQM);
+				LabelledLogoView thisLLV = (LabelledLogoView) this.parent();
+				thisLLV.getMotifLabelLineEdit().setMotif(newQM);
 				e.accept();
 				update();
 			} else {
@@ -652,85 +763,6 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	}
 
 	
-	public void mouseDoubleClickEvent(QMouseEvent e) {
-		motif.toggleSelected();
-		if (motif.isSelected()) {
-			borderItem.setBrush(selectedBrush);
-		} else {
-			borderItem.setBrush(normalBrush);
-		}
-		super.mouseDoubleClickEvent(e);
-	}
-	
-	/**
-	 * FIXME: Move the event handling across to the graphics item views
-	 * 
-	 * @see com.trolltech.qt.gui.QGraphicsView#mousePressEvent(com.trolltech.qt.gui.QMouseEvent)
-	 */
-	protected void mousePressEvent(QMouseEvent e) {
-		dragStartPosition = e.pos();
-		setFocus();
-		int column = wmColumn(e.pos());
-		DistributionItemIface item = itemAtPosition(e.pos());
-		
-		if (e.modifiers().isSet(Qt.KeyboardModifier.ShiftModifier)) {
-			//this.toggleIsSelected();
-			if (lastSelectedColumn <= column) {
-				for (int i = (lastSelectedColumn + 1); i <= column;i++) {
-					toggleSelection(i);
-				}
-			} else {
-				for (int i = column; i <= (lastSelectedColumn - 1);i++) {
-					toggleSelection(i);
-				}
-			}
-			for (QDistribution qd : motif.getDists())
-				qd.selectionStateUpdated();
-			
-		} else {
-			//toggleSelectionAtPosition(e.pos());
-		}
-		lastSelectedColumn = column;
-		lastSelectedItem = item;
-		
-		super.mousePressEvent(e);
-	}
-	
-	/*
-	public void toggleIsSelected() {
-		this.isSelected = !this.isSelected;
-	}*/
-	
-	
-	/**
-	 * @return the isInFocus
-	 */
-	/*
-	public boolean isInFocus() {
-		return isInFocus;
-	}*/
-
-	/**
-	 * @param isInFocus the isInFocus to set
-	 */
-	/*public void setInFocus(boolean isInFocus) {
-		this.isInFocus = isInFocus;
-	}*/
-
-	/**
-	 * @return the isSelected
-	 */
-	 /*public boolean isSelected() {
-		return isSelected;
-	}*/
-
-	/**
-	 * @param isSelected the isSelected to set
-	 */
-	/*public void setSelected(boolean isSelected) {
-		this.isSelected = isSelected;
-	}*/
-
 	/**
 	 * @return the lastSelectedColumn
 	 */
@@ -743,49 +775,6 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	 */
 	public void setLastSelectedColumn(int lastSelectedColumn) {
 		this.lastSelectedColumn = lastSelectedColumn;
-	}
-	
-	protected void mouseMoveEvent(QMouseEvent e) {
-		if (dragStartPosition == null)
-			return;
-
-		if (motif == null)
-			return;
-		
-		if (e.pos().subtract(dragStartPosition).manhattanLength() < QApplication.startDragDistance())
-			return;
-		
-		dragStartPosition = null; //don't want to keep starting new drags all the time
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		
-		try {
-			MotifIOTools.writeMotifSetXML(outputStream, new Motif[] {motif.getNmicaMotif()});
-		} catch (Exception e1) {
-			e1.printStackTrace();
-		}
-		if (outputStream != null) {
-			QDrag drag = new QDrag(this);
-			QMimeData mimeData = new QMimeData();
-			//System.out.println("Byte array size:" + outputStream.size());
-			if (outputStream.size() > 0) {
-				byte[] bytes = outputStream.toByteArray();
-				QByteArray qbytes = new QByteArray(bytes);
-				//System.out.println(qbytes.toString());
-				mimeData.setData("xml/xms", qbytes);
-				drag.setMimeData(mimeData);
-
-				QPixmap pixmap = new QPixmap(this.size());
-				this.render(pixmap);
-				drag.setPixmap(pixmap);
-				drag.setHotSpot(new QPoint(0,0));
-				drag.exec();
-			} else {
-				//TODO: throw exception here
-				System.err.println("Nothing was written to the stream!");
-			}
-		}
-		
-		super.mouseMoveEvent(e);
 	}
 	
 	protected int wmColumn(QPoint p) {
@@ -987,7 +976,23 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		return null;
 	}
 	
-	public QGraphicsPathItem getBorderItem() {
+	public QGraphicsRectItem getBorderItem() {
 		return this.borderItem;
+	}
+
+
+	/**
+	 * @return the lineEdit
+	 */
+	public MotifLabelLineEdit getLineEdit() {
+		return lineEdit;
+	}
+
+
+	/**
+	 * @param lineEdit the lineEdit to set
+	 */
+	public void setLineEdit(MotifLabelLineEdit lineEdit) {
+		this.lineEdit = lineEdit;
 	}
 }

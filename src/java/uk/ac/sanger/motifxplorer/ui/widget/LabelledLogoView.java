@@ -17,7 +17,7 @@ import com.trolltech.qt.gui.QSizePolicy;
 import com.trolltech.qt.gui.QWidget;
 
 //TODO: Change drag and drop such that one's actually dragging and dropping MotifLogoWithLabelWidgets
-public class LabelledLogoWidget extends QWidget {
+public class LabelledLogoView extends QWidget {
 	private LogoView motifLogoWidget;
 	private MotifLabelLineEdit motifLabelLineEdit;
 	private boolean infoContentScale;
@@ -29,7 +29,7 @@ public class LabelledLogoWidget extends QWidget {
 	public static final int DEFAULT_TOTAL_WIDGET_WIDTH = DEFAULT_MIN_LINE_EDIT_WIDTH + LogoView.MOTIF_WIDTH;
 	public static final int DEFAULT_TOTAL_WIDGET_HEIGHT = (int)LogoView.MOTIF_HEIGHT * 4;
 
-	public LabelledLogoWidget(MotifSetView msetWidget, QMotif m, int maxCols, boolean infoContentScale) {
+	public LabelledLogoView(MotifSetView msetWidget, QMotif m, int maxCols, boolean infoContentScale) {
 		this.setLayout(new QHBoxLayout());
 		this.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed);
 		this.infoContentScale = infoContentScale;
@@ -93,7 +93,7 @@ public class LabelledLogoWidget extends QWidget {
 		Motif m = motifs[0];
 		QMotif qm = new QMotif(m);
 		QApplication.initialize(args);
-		QWidget widget = new LabelledLogoWidget(null, qm, LogoView.DEFAULT_MAX_COLS, true);
+		QWidget widget = new LabelledLogoView(null, qm, LogoView.DEFAULT_MAX_COLS, true);
 		widget.show();
 		//widget.resize(500,100);
 		QApplication.exec();
@@ -102,7 +102,7 @@ public class LabelledLogoWidget extends QWidget {
 	/**
 	 * @return the lineEdit
 	 */
-	public QLineEdit getMotifLabelLineEdit() {
+	public MotifLabelLineEdit getMotifLabelLineEdit() {
 		return motifLabelLineEdit;
 	}
 
@@ -118,11 +118,6 @@ public class LabelledLogoWidget extends QWidget {
 	 */
 	public LogoView getLogo() {
 		return motifLogoWidget;
-	}
-
-	public void setColor(QColor color) {
-		this.color = color;
-		
 	}
 
 }

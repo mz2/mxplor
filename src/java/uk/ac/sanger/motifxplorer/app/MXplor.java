@@ -28,12 +28,12 @@ import org.biojava.bio.symbol.IllegalSymbolException;
 import uk.ac.sanger.motifxplorer.cmd.ReverseComplementCommand;
 import uk.ac.sanger.motifxplorer.cmd.ShiftCommand;
 import uk.ac.sanger.motifxplorer.nmica.NestedMICATask;
-import uk.ac.sanger.motifxplorer.ui.UiMainWindow;
 import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegion;
+import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegionSet;
 import uk.ac.sanger.motifxplorer.ui.graphics.ScoredMotifRegion;
 import uk.ac.sanger.motifxplorer.ui.graphics.SelectableMotifRegion;
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
-import uk.ac.sanger.motifxplorer.ui.widget.LabelledLogoWidget;
+import uk.ac.sanger.motifxplorer.ui.widget.LabelledLogoView;
 import uk.ac.sanger.motifxplorer.ui.widget.LogoView;
 import uk.ac.sanger.motifxplorer.ui.widget.MotifSetView;
 
@@ -69,7 +69,6 @@ public class MXplor extends QMainWindow {
 	private static final String SET_NAME_PROPERTY = "setId";
 	private static final String DEFAULT_SET_NAME = "untitled";
 	private static final int NUM_MOTIFS_SHOWN_AT_A_TIME = 6;
-	private UiMainWindow ui = new UiMainWindow();
     //private MotifTableModel motifTableModel = new MotifTableModel(this);
     //private List<QMotif> motifs;
     //private String fileName;
@@ -120,7 +119,7 @@ public class MXplor extends QMainWindow {
     protected static List<MXplor> allMotifSetWindows = new ArrayList<MXplor>();
     
     
-	private MotifSetView motifSetWidget;
+	private MotifSetView motifSetView;
 	private QScrollArea scrollArea;
 	private boolean startNMICA;
 	private String[] args;
@@ -139,8 +138,8 @@ public class MXplor extends QMainWindow {
 	//public static final int DEFAULT_MIN_SCROLL_AREA_HEIGHT = 600;
 	//public static final int DEFAULT_MAX_SCROLL_AREA_HEIGHT = 600;
 	
-	public static final int DEFAULT_MIN_WINDOW_WIDTH = LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_WIDTH - 100;
-	public static final int DEFAULT_MAX_WINDOW_WIDTH = LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_WIDTH;
+	public static final int DEFAULT_MIN_WINDOW_WIDTH = LabelledLogoView.DEFAULT_TOTAL_WIDGET_WIDTH - 100;
+	public static final int DEFAULT_MAX_WINDOW_WIDTH = LabelledLogoView.DEFAULT_TOTAL_WIDGET_WIDTH;
 	public static final int DEFAULT_MIN_WINDOW_HEIGHT = 400;
 	public static final int DEFAULT_MAX_WINDOW_HEIGHT = 600;
 	public static final int DEFAULT_MIN_COL_HEIGHT = LogoView.MOTIF_HEIGHT ;
@@ -158,6 +157,8 @@ public class MXplor extends QMainWindow {
 	private QAction actionSelectNoneAnnotations;
 	private QAction actionMLEMetaMotifsFromAnnotations;
 	private QAction actionSave;
+	
+	
 	
 	public MXplor(String name, List<QMotif> motifs) {
 		this(name, motifs, MotifSetView.DEFAULT_MAX_COLS, MotifSetView.DEFAULT_X_OFFSET);
@@ -198,9 +199,9 @@ public class MXplor extends QMainWindow {
 		this.setSizePolicy(QSizePolicy.Policy.Preferred,QSizePolicy.Policy.Preferred);
 		scrollArea.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred);
 		scrollArea.setWidgetResizable(true);
-		motifSetWidget = new MotifSetView(name, scrollArea, motifs, maxCols, xOffset, infoContentScale);
-		motifSetWidget.setMinimumWidth(DEFAULT_MIN_WINDOW_WIDTH);
-		scrollArea.setWidget(motifSetWidget);
+		motifSetView = new MotifSetView(name, scrollArea, motifs, maxCols, xOffset, infoContentScale);
+		motifSetView.setMinimumWidth(DEFAULT_MIN_WINDOW_WIDTH);
+		scrollArea.setWidget(motifSetView);
 		
 		scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff);
 		setCentralWidget(scrollArea);
@@ -354,9 +355,9 @@ public class MXplor extends QMainWindow {
 		this.update();
 	}
 	
-	//FIXME: Disable this action item in the menu if there are no logos to export...
+	//FIXME: Disable this action item in the menu if there are no logos to export
 	public void on_actionExport_PDF_triggered() {
-		if (motifSetWidget.logoWidgets() == 0) return;
+		if (motifSetView.logoWidgets() == 0) return;
 		
 		String filename = QFileDialog
 							.getSaveFileName(
@@ -372,12 +373,11 @@ public class MXplor extends QMainWindow {
         printer.setOutputFileName(filename);
         QPainter pdfPainter = new QPainter(printer);
         
-        int logoCount = motifSetWidget.logoWidgets();
+        int logoCount = motifSetView.logoWidgets();
         double vPadding = 20;
-        LogoView firstLogo = motifSetWidget
+        LogoView firstLogo = motifSetView
 								.getLabelledLogoWidget(0)
 								.getLogo();
-        
         
         for (int i = 0; i < logoCount; i++) {
             QRectF logoTargetRect = new QRectF(120,
@@ -390,7 +390,7 @@ public class MXplor extends QMainWindow {
             		(i * vPadding),
 					firstLogo.scene().sceneRect().width(),
 					firstLogo.scene().sceneRect().height());
-        	LabelledLogoWidget widg = motifSetWidget.getLabelledLogoWidget(i);
+        	LabelledLogoView widg = motifSetView.getLabelledLogoWidget(i);
         	widg.getLogo().getBorderItem().setVisible(false);
         	QGraphicsScene scene = widg.getLogo().scene();
         	scene.render(pdfPainter, logoTargetRect, scene.sceneRect());
@@ -402,7 +402,7 @@ public class MXplor extends QMainWindow {
         }
         
         for (int i = 0; i < logoCount; i++) {
-            LabelledLogoWidget widg = motifSetWidget.getLabelledLogoWidget(i);
+            LabelledLogoView widg = motifSetView.getLabelledLogoWidget(i);
         	widg.getLogo().getBorderItem().setVisible(true);
         }
         
@@ -452,8 +452,8 @@ public class MXplor extends QMainWindow {
     }
     
     public void on_menuEdit_aboutToShow() {
-    	actionUndo.setEnabled(motifSetWidget.getUndoStack().canUndo());
-    	actionRedo.setEnabled(motifSetWidget.getUndoStack().canRedo());
+    	actionUndo.setEnabled(motifSetView.getUndoStack().canUndo());
+    	actionRedo.setEnabled(motifSetView.getUndoStack().canRedo());
     }
     
     
@@ -471,12 +471,8 @@ public class MXplor extends QMainWindow {
     }
     
     private String getName() {
-		return this.motifSetWidget.getName();
+		return this.motifSetView.getName();
 	}
-
-	public void on_actionBestHits_triggered(Integer i) {
-    	
-    }
     
     public void on_actionAdd_triggered() {
     	try {
@@ -487,13 +483,13 @@ public class MXplor extends QMainWindow {
     }
     
     public void on_actionUndo_triggered() {
-    	if (motifSetWidget.getUndoStack().canUndo())
-    		motifSetWidget.getUndoStack().undo();
+    	if (motifSetView.getUndoStack().canUndo())
+    		motifSetView.getUndoStack().undo();
     }
     
     public void on_actionRedo_triggered() {
-    	if (motifSetWidget.getUndoStack().canRedo())
-    		motifSetWidget.getUndoStack().redo();    	
+    	if (motifSetView.getUndoStack().canRedo())
+    		motifSetView.getUndoStack().redo();    	
     }
     
     public void addMotifsFromFile() throws Exception {
@@ -506,7 +502,7 @@ public class MXplor extends QMainWindow {
     
     
     public void on_actionMLEMetaMotif_triggered() throws BioException {
-    	List<QMotif> qmotifs  = motifSetWidget.getMotifs();
+    	List<QMotif> qmotifs  = motifSetView.getMotifs();
     	Motif[] motifs = new Motif[qmotifs.size()];
     	MetaMotif mm = null;
     	for (int i = 0; i < qmotifs.size(); i++)
@@ -545,7 +541,7 @@ public class MXplor extends QMainWindow {
     
     public void on_actionExtractMotifs_triggered() throws IllegalSymbolException, IllegalAlphabetException {
     	System.out.println("Extracting motifs...");
-    	Motif[] motifs = motifSetWidget.allSelectedColumnsAsMotifs();
+    	Motif[] motifs = motifSetView.allSelectedColumnsAsMotifs();
     	MXplor mxplorWindow = new MXplor("Extracted motifs",QMotif.motifsToQMotifs(motifs),
 				LogoView.DEFAULT_MAX_COLS, LogoView.DEFAULT_X_OFFSET, args,
 				true);
@@ -573,7 +569,7 @@ public class MXplor extends QMainWindow {
     public void on_actionExtractMotifsFromAnnotations_triggered() throws Exception {
     	System.out.println("Extracting motifs from annotations...");
 
-    	Motif[] motifs = motifSetWidget.selectedAnnotationsAsMotifs();
+    	Motif[] motifs = motifSetView.selectedAnnotationsAsMotifs();
     	MotifIOTools.writeMotifSetXML(new FileOutputStream(new File("/tmp/foo.xms")),motifs);
     	
     	MXplor mxplorWindow = new MXplor("Extracted motifs",
@@ -588,12 +584,15 @@ public class MXplor extends QMainWindow {
     }
     
     public void on_actionMLEMetaMotifsFromAnnotations_triggered() throws Exception {
-    	List<QMotif> qmotifs  = motifSetWidget.getMotifs();
+    	List<QMotif> qmotifs  = motifSetView.getMotifs();
     	Motif[] motifs = new Motif[qmotifs.size()];
-    	MetaMotif mm = DirichletParamEstimator.mle(motifSetWidget.selectedAnnotationsAsMotifs());
+    	MetaMotif mm = DirichletParamEstimator.mle(
+    						motifSetView.selectedAnnotationsAsMotifs());
     	
     	List<QMotif> qms = QMotif.create(
-    						Arrays.asList(new Motif[]{MetaMotifIOTools.metaMotifToAnnotatedMotif(mm)}));
+    						Arrays.asList(
+    							new Motif[]{
+									MetaMotifIOTools.metaMotifToAnnotatedMotif(mm)}));
     	MXplor mxplorWindow = new MXplor("MLE metamotif", qms);
     	mxplorWindow.show();
     	mxplorWindow.update();
@@ -602,9 +601,9 @@ public class MXplor extends QMainWindow {
     }
     
     public void on_actionRemoveScoredRegions_triggered() {
-    	SelectableMotifRegion[] selRegs = motifSetWidget.selectedMotifRegions();
+    	SelectableMotifRegion[] selRegs = motifSetView.selectedMotifRegions();
     	//motifSetWidget.get
-    	motifSetWidget.removeMotifRegions(selRegs);
+    	motifSetView.removeMotifRegions(selRegs);
     	repaint();
     }
     
@@ -613,16 +612,18 @@ public class MXplor extends QMainWindow {
     	if (name == null) return;
     	deselectAllAnnotations();
     	
-    	int maxAnnotId = MotifRegion.maxAnnotationSetId();
+    	MotifRegionSet mregSet = new MotifRegionSet();
+    	mregSet.setColor(MotifSetView.annotationColors().colorFor(mregSet));
     	
-    	for (QMotif m : motifSetWidget.getMotifs()) {
+    	//int maxAnnotId = MotifRegion.maxAnnotationSetId();
+    	
+    	for (QMotif m : motifSetView.getMotifs()) {
     		int prevI = -2; //so there's a difference of more than 1 to begin with
     		List<Set<Integer>> selectedSets = new ArrayList<Set<Integer>>();
     		Set<Integer> currentSet = null;
     		for (int i : m.getSelectedColumnIndices()) {
     			if ((i - prevI) > 1) {
-    				if (currentSet != null && currentSet.size() > 0) 
-    					{
+    				if (currentSet != null && currentSet.size() > 0)  {
     						selectedSets.add(currentSet);
     						currentSet = new TreeSet<Integer>();
     					}
@@ -633,7 +634,6 @@ public class MXplor extends QMainWindow {
     		}
     		if (!selectedSets.contains(currentSet))
     			selectedSets.add(currentSet);
-    		
 
         	for (Set<Integer> set : selectedSets) {
         		if (set == null || set.size() == 0) continue;
@@ -642,9 +642,14 @@ public class MXplor extends QMainWindow {
         		// FIXME: addMotifRegion should handle the construction. This way you're 
         		// making it possible to make the qmotif reference 
         		// in MotifRegion point to a different qmotif
-        		SelectableMotifRegion motifReg = new SelectableMotifRegion(m, ints[0], ints.length);
-        		motifReg.setAnnotationSetId(maxAnnotId + 1);
+        		SelectableMotifRegion motifReg = new SelectableMotifRegion(
+        												mregSet, 
+        												m, 
+        												ints[0], 
+        												ints.length);
+        		//motifReg.setAnnotationSetId(maxAnnotId + 1);
         		motifReg.setSelectedRegion(true);
+        		motifReg.setColor(mregSet.color());
         		motifReg.setKept(true);
         		
         		if (name != null) motifReg.setName(name);
@@ -653,7 +658,7 @@ public class MXplor extends QMainWindow {
     	}
     	
     	//then clear the selection
-    	for (QMotif m : motifSetWidget.getMotifs()) {
+    	for (QMotif m : motifSetView.getMotifs()) {
     		for (int i : m.getSelectedColumnIndices())
     			m.getDists().get(i).toggleSelected();
     	}
@@ -665,12 +670,21 @@ public class MXplor extends QMainWindow {
     	String newName = QInputDialog.getText(this, "Rename annotation","Name");
     	if (newName == null) return;
     	
-    	for (QMotif m : motifSetWidget.getMotifs())
+    	MotifRegionSet regSet = null;
+    	boolean firstDone = false;
+    	for (QMotif m : motifSetView.getMotifs())
     		for (int i = 0; i < m.regions(); i++){
     			MotifRegion reg = m.getRegion(i);
     			if (reg instanceof SelectableMotifRegion) {
     				SelectableMotifRegion sreg = (SelectableMotifRegion) reg;
-    				if (sreg.isSelectedRegion()) sreg.setName(newName);
+    				if (!firstDone) {
+    					firstDone = true;
+    					regSet = sreg.getAnnotationSet();
+    				}
+    				if (sreg.isSelectedRegion()) {
+    					sreg.setName(newName);
+    					sreg.setAnnotationSet(regSet);
+    				}
     			}
     		}
     	
@@ -679,54 +693,46 @@ public class MXplor extends QMainWindow {
     
     //TODO: Indexing according to annotation set would make this more efficient
     public void selectAllInTheAnnotationSets() {
-    	Set<Integer> setIds = new TreeSet<Integer>();
+    	List<MotifRegionSet> sets = new ArrayList<MotifRegionSet>();
     	
     	//get all the selected set ids
-    	for (QMotif m : motifSetWidget.getMotifs()) {
+    	for (QMotif m : motifSetView.getMotifs()) {
     		for (int i = 0; i < m.regions(); i++) {
     			MotifRegion reg = m.getRegion(i);
-    			if (reg.isSelected() &! setIds.contains(reg.getAnnotationSetId()))
-    				setIds.add(reg.getAnnotationSetId());
+    			if (reg.isSelected() &! sets.contains(reg.getAnnotationSet()))
+    				sets.add(reg.getAnnotationSet());
     		}
     	}
     	
     	//add all the set members to the selection
-    	for (int setId : setIds) {
-    		for (QMotif m : motifSetWidget.getMotifs()) {
-        		for (int i = 0; i < m.regions(); i++) {
-        			MotifRegion reg = m.getRegion(i);
-        			if (reg.getAnnotationSetId() == setId)
-        				reg.setSelected(true);
-        		}
-        	}
-    	}
+    	for (MotifRegionSet set : sets)
+    		for (MotifRegion reg : set.getRegions())
+        		reg.setSelected(true);
     }
     
     public void unselectAllInTheAnnotationSets() {
-    	Set<Integer> setIds = new TreeSet<Integer>();
+    	Set<MotifRegionSet> sets = new TreeSet<MotifRegionSet>();
     	
-    	for (QMotif m : motifSetWidget.getMotifs()) {
+    	for (QMotif m : motifSetView.getMotifs()) {
     		for (int i = 0; i < m.regions(); i++) {
     			MotifRegion reg = m.getRegion(i);
-    			if (!reg.isSelected() &! setIds.contains(reg.getAnnotationSetId()))
-    				setIds.add(reg.getAnnotationSetId());
+    			
+    			if (reg instanceof SelectableMotifRegion && 
+    					!((SelectableMotifRegion)reg).isSelectedRegion() 
+    					&! sets.contains(reg.getAnnotationSet()))
+    				sets.add(reg.getAnnotationSet());
     		}
     	}
-    	
-    	for (int setId : setIds) {
-    		for (QMotif m : motifSetWidget.getMotifs()) {
-        		for (int i = 0; i < m.regions(); i++) {
-        			MotifRegion reg = m.getRegion(i);
-        			if (reg instanceof SelectableMotifRegion)
-        				if (reg.getAnnotationSetId() == setId)
-        					((SelectableMotifRegion)reg).setSelectedRegion(false);
-        		}
-        	}
-    	}
+
+    	for (MotifRegionSet set : sets)
+    		for (MotifRegion reg : set.getRegions())
+	    		if (reg instanceof SelectableMotifRegion &&
+    				reg.getAnnotationSet() == set)
+    					((SelectableMotifRegion)reg).setSelectedRegion(false);
     }
     
     public void selectAllAnnotations() {
-    	for (QMotif m : motifSetWidget.getMotifs())
+    	for (QMotif m : motifSetView.getMotifs())
     		for (int i = 0; i < m.regions(); i++) {
     			if (m.getRegion(i) instanceof SelectableMotifRegion)
     				((SelectableMotifRegion)m.getRegion(i)).setSelectedRegion(true);
@@ -734,7 +740,7 @@ public class MXplor extends QMainWindow {
     }
     
     public void deselectAllAnnotations() {
-    	for (QMotif m : motifSetWidget.getMotifs())
+    	for (QMotif m : motifSetView.getMotifs())
     		for (int i = 0; i < m.regions(); i++)
     			if (m.getRegion(i) instanceof SelectableMotifRegion)
     				((SelectableMotifRegion)m.getRegion(i)).setSelectedRegion(false);
@@ -781,16 +787,16 @@ public class MXplor extends QMainWindow {
     }
     
     public void on_actionReverse_complement_triggered() {
-    	motifSetWidget.getUndoStack().push(new ReverseComplementCommand(motifSetWidget.getSelectedMotifs(), null));
+    	motifSetView.getUndoStack().push(new ReverseComplementCommand(motifSetView.getSelectedMotifs(), null));
 
     }
     
     public void on_actionShift_left_triggered() {
-    	motifSetWidget.getUndoStack().push(new ShiftCommand(this.motifSetWidget.getSelectedMotifs(),-1,null));
+    	motifSetView.getUndoStack().push(new ShiftCommand(this.motifSetView.getSelectedMotifs(),-1,null));
     }
     
     public void on_actionShift_right_triggered() {
-    	motifSetWidget.getUndoStack().push(new ShiftCommand(this.motifSetWidget.getSelectedMotifs(),1,null));    	
+    	motifSetView.getUndoStack().push(new ShiftCommand(this.motifSetView.getSelectedMotifs(),1,null));    	
     }
     
     public void on_actionBest_hits_triggered() {
@@ -802,8 +808,8 @@ public class MXplor extends QMainWindow {
     }
     
     public void openFile() throws Exception {
-    	if ((motifSetWidget.getMotifs() == null) || 
-    		(motifSetWidget.getMotifs().size() == 0))
+    	if ((motifSetView.getMotifs() == null) || 
+    		(motifSetView.getMotifs().size() == 0))
     		this.close();
 
     	HashMap<String, List<QMotif>> motifs = this.openXMSFile("");
@@ -814,7 +820,7 @@ public class MXplor extends QMainWindow {
 	private void newMXplorWindow(String s, List<QMotif> motifs) {
 		MXplor mxplorWindow;
 		mxplorWindow = new MXplor(s, motifs);
-    	for (QMotif m : mxplorWindow.motifSetWidget.getMotifs())
+    	for (QMotif m : mxplorWindow.motifSetView.getMotifs())
     		for (int i = 0; i < m.regions(); i++)
     			m.getRegion(i).updateLocation();
     	
@@ -893,7 +899,7 @@ public class MXplor extends QMainWindow {
     public boolean eventFilter(QObject obj, QEvent event) {
     	if (event instanceof QFileOpenEvent) {
     		QFileOpenEvent foe = (QFileOpenEvent)event;
-    		System.out.println("File opened!" + foe.file());
+    		//System.out.println("File opened!" + foe.file());
     		HashMap<String, List<QMotif>> motifs = null;
 			try {
 				motifs = openXMSFile(foe.file());
@@ -978,18 +984,18 @@ public class MXplor extends QMainWindow {
 	}*/
     
 	public void addMotifs(List<QMotif> motifs) {
-		motifSetWidget.addMotifs(motifs);
+		motifSetView.addMotifs(motifs);
 		firstTime = false;
     	this.resizeWindowAndScrollArea();
 	}
 
 	
 	private void resizeWindowAndScrollArea() {
-		if (motifSetWidget.getMotifs() != null) {
+		if (motifSetView.getMotifs() != null) {
 			//System.out.println("Will resize (non-null motifs)");
-			resize(LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_WIDTH,
+			resize(LabelledLogoView.DEFAULT_TOTAL_WIDGET_WIDTH,
 					(int)Math.round(DEFAULT_MIN_COL_HEIGHT * NUM_MOTIFS_SHOWN_AT_A_TIME * 1.0));
-			scrollArea.resize(LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_WIDTH, Math.min(DEFAULT_MIN_COL_HEIGHT * 3,this.width()));
+			scrollArea.resize(LabelledLogoView.DEFAULT_TOTAL_WIDGET_WIDTH, Math.min(DEFAULT_MIN_COL_HEIGHT * 3,this.width()));
 		}
 		else {
 			//System.out.println("Will resize (null motifs)");
@@ -1001,7 +1007,7 @@ public class MXplor extends QMainWindow {
 	}
 	
 	public QSize sizeHint() {
-		return new QSize(LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_WIDTH, DEFAULT_MIN_COL_HEIGHT * NUM_MOTIFS_SHOWN_AT_A_TIME);
+		return new QSize(LabelledLogoView.DEFAULT_TOTAL_WIDGET_WIDTH, DEFAULT_MIN_COL_HEIGHT * NUM_MOTIFS_SHOWN_AT_A_TIME);
 	}
 	
 	protected void showEvent(QShowEvent showEvent) {
@@ -1070,17 +1076,17 @@ public class MXplor extends QMainWindow {
 	}
 	
 	public void exportSetToXMS(OutputStream os) throws Exception {
-		List<Motif> motifs = QMotif.qmotifsToMotifs(this.motifSetWidget.getMotifs());
+		List<Motif> motifs = QMotif.qmotifsToMotifs(this.motifSetView.getMotifs());
 		MotifIOTools.writeMotifSetXML(os, motifs.toArray(new Motif[motifs.size()]));
 	}
 	
 	public void exportMotifSetToXMS(OutputStream os) throws Exception {
-		List<QMotif> qms = motifSetWidget.getMotifs();
+		List<QMotif> qms = motifSetView.getMotifs();
 		List<Motif> motifs = QMotif.qmotifsToMotifs(qms);
 		
 		for (Motif m : motifs)
 			m.getAnnotation()
-				.setProperty(SET_NAME_PROPERTY, motifSetWidget.getName());
+				.setProperty(SET_NAME_PROPERTY, motifSetView.getName());
 		
 		MotifIOTools.writeMotifSetXML(os, motifs.toArray(new Motif[motifs.size()]));
 	}
@@ -1088,12 +1094,12 @@ public class MXplor extends QMainWindow {
 	public void exportSessionToXMS(OutputStream os) throws Exception {
 		List<Motif> allMotifs = new ArrayList<Motif>();
 		for (int i = 0; i < allMotifSetWindows.size(); i++) {
-			List<QMotif> qms = allMotifSetWindows.get(i).motifSetWidget.getMotifs();
+			List<QMotif> qms = allMotifSetWindows.get(i).motifSetView.getMotifs();
 			List<Motif> motifs = QMotif.qmotifsToMotifs(qms);
 			for (Motif m : motifs) {
 				m.getAnnotation()
 					.setProperty(SET_NAME_PROPERTY, 
-								allMotifSetWindows.get(i).motifSetWidget.getName());
+								allMotifSetWindows.get(i).motifSetView.getName());
 			}
 			allMotifs.addAll(motifs);
 		}
@@ -1113,51 +1119,81 @@ public class MXplor extends QMainWindow {
 	}
 
 	public void comparisonAgainstMotifset(MXplor mxplor1) {
-		for (QMotif qm0 : this.motifSetWidget.getMotifs()) {
-			if (!qm0.isMetaMotif()) continue;
-			for (QMotif qm1 : mxplor1.motifSetWidget.getMotifs()) {
-				
-				double[] hitLogProbs = null;
-				try {
-					hitLogProbs = qm0
-									.getMetaMotif()
-										.logProbDensities(
-											qm1.getNmicaMotif()
-												.getWeightMatrix());
-				} catch (IllegalSymbolException e) {
-					throw new BioError(e);
-				} catch (IllegalAlphabetException e) {
-					throw new BioError(e);
-				}
-				int maxIndex = 0;
-				
-				if (hitLogProbs != null) {
-					double maxValue = Double.NEGATIVE_INFINITY;
-					for (int i = 1; i < hitLogProbs.length; i++)
-						if (!Double.isNaN(hitLogProbs[i]) &! Double.isInfinite(hitLogProbs[i]) && maxValue < hitLogProbs[i])
-							maxValue = hitLogProbs[maxIndex = i];
-					
-					if (!Double.isInfinite(maxValue)) {
-						System.out.println("Max hit: " + maxValue + " (i:" + maxIndex + ")");
-						int metaMotifLength = qm0.getMetaMotif().columns();
-						System.out.println("Metamotif length:" + metaMotifLength + " " + qm1.getNmicaMotif().getWeightMatrix().columns());
-						ScoredMotifRegion sar = new ScoredMotifRegion(
-								qm1,
-								maxIndex,
-								metaMotifLength,
-								NativeMath.exp2(maxValue));
-						sar.setName(qm0.getNmicaMotif().getName());
-						qm1.addRegion(sar);
-						
-						updateWidget();
-						mxplor1.updateWidget();
-					} else {
-						System.out.println("No significant hits found");
-					}
-				} else {
-					
-				}
-			}
+		
+		//FIXME: Threshold should have a different value
+		double threshold = QInputDialog.getDouble(this,
+                "Score threshold",
+                "value",
+                -50,
+               -100000000,
+                100000000,
+                5,
+                new Qt.WindowFlags(Qt.WindowType.Popup));
+        
+		//FIXME: Give an error message
+		if (Double.isNaN(threshold) || Double.isInfinite(threshold)) return;
+		deselectAllAnnotations();
+		
+		for (QMotif qm0 : this.motifSetView.getMotifs()) {
+			if (!qm0.isMetaMotif()) continue; //FIXME: Support motif--motif hits
+			
+			MotifRegionSet mregSet = new MotifRegionSet();
+			mregSet.setColor(qm0.color());
+			
+			for (QMotif qm1 : mxplor1.motifSetView.getMotifs())
+				bestHitsWith(mxplor1, threshold, qm0, mregSet, qm1);
+			
 		}		
+	}
+
+	private void bestHitsWith(
+			MXplor mxplor1, 
+			double threshold, 
+			QMotif qm0,
+			MotifRegionSet mregSet, 
+			QMotif qm1) throws BioError {
+		double[] hitLogProbs = null;
+		try {
+			hitLogProbs = qm0
+							.getMetaMotif()
+								.logProbDensities(
+									qm1.getNmicaMotif()
+										.getWeightMatrix());
+		} catch (IllegalSymbolException e) {
+			throw new BioError(e);
+		} catch (IllegalAlphabetException e) {
+			throw new BioError(e);
+		}
+		int maxIndex = 0;
+		
+		if (hitLogProbs != null) {
+			double maxValue = Double.NEGATIVE_INFINITY;
+			for (int i = 1; i < hitLogProbs.length; i++)
+				if (!Double.isNaN(hitLogProbs[i]) &! Double.isInfinite(hitLogProbs[i]) && maxValue < hitLogProbs[i])
+					maxValue = hitLogProbs[maxIndex = i];
+			
+			if (!Double.isInfinite(maxValue) && maxValue > threshold) {
+				System.out.println("Max hit: " + maxValue + " (i:" + maxIndex + ")");
+				int metaMotifLength = qm0.getMetaMotif().columns();
+				System.out.println("Metamotif length:" + metaMotifLength + " " + qm1.getNmicaMotif().getWeightMatrix().columns());
+				ScoredMotifRegion sar = new ScoredMotifRegion(mregSet,
+						qm1,
+						maxIndex,
+						metaMotifLength,
+						NativeMath.exp2(maxValue));
+				sar.setName(qm0.getNmicaMotif().getName());
+				sar.setSelectedRegion(true);
+				sar.setColor(mregSet.color());
+				//sar.setBrushes(qm0.color());
+				qm1.addRegion(sar);
+				
+				updateWidget();
+				mxplor1.updateWidget();
+			} else {
+				System.out.println("No significant hits found");
+			}
+		} else {
+			
+		}
 	}
 }

@@ -32,52 +32,70 @@ public class MotifRegion extends QGraphicsRectItem {
 	private QMotif motif;
 	private int begin;
 	private int length;
-	
 	private String name;
-	private boolean kept;
+	private String desc;
 	
-	private QGraphicsTextItem nameItem;
+	protected boolean kept = true;
+	private QGraphicsTextItem nameAndDescItem;
 	
-	private static final QBrush defaultBrush = new QBrush(new QColor(255,200,100,20));
-	private QBrush dBrush = defaultBrush;
+	private static final QColor DEFAULT_BRUSH_COLOR =  new QColor(255,200,100,100);
+	private static final QBrush DEFAULT_BRUSH = new QBrush(DEFAULT_BRUSH_COLOR);
+	protected QBrush normalBrush = DEFAULT_BRUSH;
 	
-	private static final QPen unkeptPen = new QPen(new QColor(255,150,150,255),2,
+	private static final QColor DEFAULT_PEN_COLOR = new QColor(255,200,100,100);
+	private static final QPen DEFAULT_UNKEPT_PEN = new QPen(DEFAULT_PEN_COLOR,2,
 												Qt.PenStyle.SolidLine,
 												Qt.PenCapStyle.RoundCap,
 												Qt.PenJoinStyle.RoundJoin);
 	
-	private static final QPen keptPen = new QPen(new QColor(255,150,150,255),4,
+	private static final QPen DEFAULT_KEPT_PEN = new QPen(DEFAULT_PEN_COLOR,4,
 												Qt.PenStyle.SolidLine,
 												Qt.PenCapStyle.RoundCap,
 												Qt.PenJoinStyle.RoundJoin);
 	
-	protected QPen kPen = keptPen;
-	protected QPen uPen = unkeptPen;
+	protected QColor kPenCol, uPenCol;
+	protected QPen kPen = DEFAULT_KEPT_PEN;
+	protected QPen uPen = DEFAULT_UNKEPT_PEN;
 	
-	
-	private int annotationSetId;
-	private int numOverlaps;
-	private static int maxAnnotationSetId = 0;
-	public static int maxAnnotationSetId() {return maxAnnotationSetId;}
-	
+	//protected int annotationSetId;
+	protected int numOverlaps;
+	private MotifRegionSet regionSet;
+	//private static int maxAnnotationSetId = 0;
+	//public static int maxAnnotationSetId() {return maxAnnotationSetId;}
 	
 	public QMotif getMotif() {
 		return this.motif;
 	}
 	
-	public MotifRegion(QMotif m, int begin, int length) {
-		init(m, begin, length);
+	public MotifRegion(MotifRegionSet mset, QMotif m, int begin, int length) {
+		this.motif = m;
+		this.begin = begin;
+		this.length = length;
+		
+		
+		regionSet = mset;
+		if (regionSet != null) {
+			mset.getRegions().add(this);
+			if (regionSet.color() != null) 
+				setColor(regionSet.color());
+			else {
+				System.out.println("Using default colors");
+				setBrushes(defaultBrushColor());
+				setPens(defaultPenColor());
+			}
+		}
+			
 		int end = begin + length - 1;
 		QDistribution b = m.dists().get(begin);
 		QDistribution e = m.dists().get(end);
-		annotationSetId = -1;
+		//annotationSetId = -1;
 		numOverlaps = this.motif.overlappingRegions(begin, length);
 		
 		setZValue(numOverlaps + 1);
 		
 		if(name != null) {
-			nameItem = new QGraphicsTextItem(name);
-			nameItem.setParentItem(this);
+			nameAndDescItem = new QGraphicsTextItem(name);
+			nameAndDescItem.setParentItem(this);
 		}
 		
 		if (b.getBoundItem() != null && e.getBoundItem() != null) {
@@ -116,28 +134,32 @@ public class MotifRegion extends QGraphicsRectItem {
 						new QPointF(b.getBoundItem().rect().x(),
 						origH - h), rectSize));
 			
-			if (name != null && !name.equals("")) {
+			String nameS = "";
+			if (name != null)
+				nameS = name;
+			String descS = "";
+			if (desc != null)
+				descS = "";
+			
+			if (!nameS.equals("") || !descS.equals("")) {
 				System.out.println("Updating: name item " + name);
-				if (nameItem != null && nameItem.scene() != null)
-					nameItem.scene().removeItem(nameItem);
+				if (nameAndDescItem != null && nameAndDescItem.scene() != null)
+					nameAndDescItem.scene().removeItem(nameAndDescItem);
 				
-				nameItem = new QGraphicsTextItem(name);
+				if (nameS.equals("") && descS.equals(""))
+					nameAndDescItem = new QGraphicsTextItem(nameS + " - " + descS);
+				else if (nameS.equals(""))
+					nameAndDescItem = new QGraphicsTextItem(descS);
+				else
+					nameAndDescItem = new QGraphicsTextItem(nameS);
+				
 				System.out.println("Name:" + name);
-				nameItem.setParentItem(this);
-				nameItem.moveBy(
+				nameAndDescItem.setParentItem(this);
+				nameAndDescItem.moveBy(
 							b.getBoundItem().rect().x(),
 							rect().y());
 			}
 		} else {System.out.println("Updating: No begin or end item when adding " + name);}
-	}
-	
-	private void init(QMotif m, int begin, int length) {
-		this.motif = m;
-		this.begin = begin;
-		this.length = length;
-		
-		setBrush(normalBrush());
-		setPen(unkeptPen());
 	}
 
 	/**
@@ -153,11 +175,34 @@ public class MotifRegion extends QGraphicsRectItem {
 	public void setName(String name) {
 		this.name = name;
 		if (this.name != null) {
-			if (nameItem != null && nameItem.scene() != null)
-				nameItem.scene().removeItem(nameItem);
+			if (nameAndDescItem != null && nameAndDescItem.scene() != null)
+				nameAndDescItem.scene().removeItem(nameAndDescItem);
 		}
 		updateLocation();
 	}
+
+
+	/**
+	 * @return the desc
+	 */
+	public String getDesc() {
+		return desc;
+	}
+
+	/**
+	 * @param desc the desc to set
+	 */
+	public void setDesc(String desc) {
+		this.desc = desc;
+		this.name = name;
+			if (this.desc != null && 
+				nameAndDescItem != null && 
+				nameAndDescItem.scene() != null)
+				nameAndDescItem.scene().removeItem(nameAndDescItem);
+		
+		updateLocation();
+	}
+	
 
 	/**
 	 * @return the kept
@@ -183,29 +228,20 @@ public class MotifRegion extends QGraphicsRectItem {
 	}
 
 	protected void setNormalBrush(QBrush brush) {
-		dBrush = brush;
+		normalBrush = brush;
 	}
 	
 	protected QBrush normalBrush() {
-		return dBrush;
+		return normalBrush;
 	}
 	
 	protected QPen unkeptPen() {
 		return uPen;
 	}
 	
-	protected void setUnkeptPen(QPen pen) {
-		this.uPen = pen;
-	}
-	
 	protected QPen keptPen() {
 		return this.kPen;
 	}
-	
-	protected void setKeptPen(QPen pen) {
-		this.kPen = pen;
-	}
-	
 	
 	/**
 	 * @return the begin
@@ -224,16 +260,16 @@ public class MotifRegion extends QGraphicsRectItem {
 	/**
 	 * @return the annotationSetId
 	 */
-	public int getAnnotationSetId() {
-		return annotationSetId;
+	public MotifRegionSet getAnnotationSet() {
+		return regionSet;
 	}
 
 	/**
 	 * @param annotationSetId the annotationSetId to set
 	 */
-	public void setAnnotationSetId(int annotationSetId) {
-		this.annotationSetId = annotationSetId;
-		if (annotationSetId > maxAnnotationSetId) maxAnnotationSetId = annotationSetId;
+	public void setAnnotationSet(MotifRegionSet regSet) {
+		regionSet = regSet;
+		if (regSet != null && regSet.color() != null) setColor(regSet.color());
 	}
 	
 	//FIXME: Bug in SimpleDistribution(Distribution d) ! Only one of the weights is read
@@ -263,6 +299,7 @@ public class MotifRegion extends QGraphicsRectItem {
 		}
 		m.setName(name);
 		
+		//FIXME: This alphaSumsFromMotif() is incorrect. the alpha sums wont be here (you just constructed the motif)
 		double[] precisions = MetaMotifIOTools.alphaSumsFromMotif(m);
 		if (precisions != null)
 			for (int i = 0; i < length; i++)
@@ -276,6 +313,53 @@ public class MotifRegion extends QGraphicsRectItem {
 		if (this.scene() != null) {
 			this.scene().removeItem(this);
 		}
+	}
+	
+	
+	public QColor getColor() {
+		return this.normalBrush.color();
+	}
+
+	public void setColor(QColor color) {
+		setBrushes(color);
+		setPens(color);
+	}
+	
+	protected QColor defaultBrushColor() {
+		return DEFAULT_BRUSH_COLOR;
+	}
+	
+	protected QColor defaultPenColor() {
+		return DEFAULT_PEN_COLOR;
+	}
+	
+	public void setBrushes(QColor color) {
+		if (color == null) {
+			color = defaultBrushColor();
+		}
+		normalBrush = new QBrush(color);
+		setBrush(normalBrush);
+	}
+	
+	protected void setPens(QColor color) {
+		if (color == null) {
+			color = defaultPenColor();
+		}
+		
+		this.kPen = new QPen(color,4,
+						Qt.PenStyle.SolidLine,
+						Qt.PenCapStyle.RoundCap,
+						Qt.PenJoinStyle.RoundJoin);
+		
+		this.uPen = new QPen(color,2,
+						Qt.PenStyle.SolidLine,
+						Qt.PenCapStyle.RoundCap,
+						Qt.PenJoinStyle.RoundJoin);
+	
+		if (kept)
+			setPen(kPen);
+		else
+			setPen(uPen);
 	}
 	
 

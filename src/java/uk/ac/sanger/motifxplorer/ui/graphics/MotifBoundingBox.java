@@ -8,33 +8,28 @@ import com.trolltech.qt.gui.QColor;
 import com.trolltech.qt.gui.QPen;
 
 public class MotifBoundingBox extends MotifRegion {
-	private static final QBrush defaultBrush = new QBrush(new QColor(0,0,0,0));
-	private static final QPen keptPen = new QPen(new QColor(0,0,0,0),0,
+	private static final QColor DEFAULT_COLOR = new QColor(255,255,255,0);
+	
+	private static final QBrush DEFAULT_BRUSH = new QBrush(DEFAULT_COLOR);
+	private static final QPen DEFAULT_KEPT_PEN = new QPen(DEFAULT_COLOR,0,
 			Qt.PenStyle.SolidLine,
 			Qt.PenCapStyle.RoundCap,
 			Qt.PenJoinStyle.RoundJoin);
-	private static final QPen unkeptPen = new QPen(new QColor(0,0,0,0),0,
+	private static final QPen unkeptPen = new QPen(DEFAULT_COLOR,0,
 			Qt.PenStyle.SolidLine,
 			Qt.PenCapStyle.RoundCap,
 			Qt.PenJoinStyle.RoundJoin);
-	
-	protected QBrush normalBrush() {
-		return defaultBrush;
-	}
-	
-	@Override
-	protected QPen keptPen() {
-		return keptPen;
-	}
-	
-	@Override
-	protected QPen unkeptPen() {
-		return unkeptPen;
-	}
-	
-	
-	
+		
 	public MotifBoundingBox(QMotif motif) {
-		super(motif,0,motif.getNmicaMotif().getWeightMatrix().columns());
+		super(null, motif,0,motif.getNmicaMotif().getWeightMatrix().columns());
+		setColor(DEFAULT_COLOR);
+	}
+	
+	public QColor defaultBrushColor() {
+		return DEFAULT_COLOR;
+	}
+	
+	public QColor defaultPenColor() {
+		return DEFAULT_COLOR;
 	}
 }

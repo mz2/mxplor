@@ -17,13 +17,14 @@ import org.biojava.bio.dist.Distribution;
 import org.biojava.bio.symbol.IllegalAlphabetException;
 import org.biojava.bio.symbol.IllegalSymbolException;
 
+import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegionSet;
 import uk.ac.sanger.motifxplorer.ui.graphics.SelectableMotifRegion;
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
+import uk.ac.sanger.motifxplorer.util.ColorBox;
 
 import com.trolltech.qt.core.QSize;
 import com.trolltech.qt.core.Qt;
 import com.trolltech.qt.gui.QApplication;
-import com.trolltech.qt.gui.QColor;
 import com.trolltech.qt.gui.QFrame;
 import com.trolltech.qt.gui.QKeyEvent;
 import com.trolltech.qt.gui.QSizePolicy;
@@ -35,25 +36,64 @@ public class MotifSetView extends QFrame {
 	private static final int NUM_SPACER_COLS = 2;
 	private static final int MAX_NUM_COLS = 20;
 	private List<QMotif> motifs;
+	
 	private int maxCols = LogoView.DEFAULT_MAX_COLS;
 	public static final int DEFAULT_MAX_COLS = 16;
 	public static final int DEFAULT_X_OFFSET = 0;
 	
-	private List<LabelledLogoWidget> widgets = new ArrayList<LabelledLogoWidget>();
+	private List<LabelledLogoView> widgets = new ArrayList<LabelledLogoView>();
 	private QVBoxLayout layout;
 	
 	private QUndoStack undoStack;
 	private boolean infoContentScale;
 	private String name;
 	
-	private static HashMap<QMotif,QColor> motifColors = new HashMap<QMotif, QColor>();
-	private static List<QColor> colors = new ArrayList<QColor>();
-	private static int defaultOpacity = 100;
+	private static final ColorBox<QMotif> colorBox = new ColorBox<QMotif>();
+	private static final ColorBox<MotifRegionSet> ANNOTATION_COLORS = new ColorBox<MotifRegionSet>();
+	public static ColorBox<MotifRegionSet> annotationColors() {return ANNOTATION_COLORS;}
 	
-	private int colorIndex = 0;
+	private final HashMap<Integer,MotifRegionSet> motifRegionSets = new HashMap<Integer,MotifRegionSet>();
 	
+	public MotifRegionSet newRegionSet() {
+		MotifRegionSet set = new MotifRegionSet();
+		motifRegionSets.put(set.getId(),set);
+		return set;
+	}
+
+	public boolean containsMotifRegionSet(int setId) {
+		return motifRegionSets.containsKey(setId);
+	}
+	
+	public boolean containsMotifRegionSet(MotifRegionSet mset) {
+		return motifRegionSets.containsKey(mset.getId());
+	}
+	
+	public void addRegionSet(MotifRegionSet set) {
+		if (!motifRegionSets.containsKey(set.getId()))
+			motifRegionSets.put(set.getId(),set);
+		else throw new IllegalArgumentException(
+				"Region set is already contained");
+	}
+	
+	public void removeRegionSet(MotifRegionSet set) {
+		if (motifRegionSets.containsKey(set.getId()))
+			motifRegionSets.remove(set);
+		else throw new IllegalArgumentException(
+				"Region set is not contained by this motif set view");
+	}
+	
+
+	public MotifRegionSet getMotifRegionSet(int setId) {
+		if (containsMotifRegionSet(setId)) return motifRegionSets.get(setId);
+		else {
+			MotifRegionSet regionSet = new MotifRegionSet(setId);
+			motifRegionSets.put(setId,regionSet);
+			return regionSet;
+		}
+	}
+	
+	/*
 	static {
-		//handpicked colors, p
 		colors.add(new QColor(0,177,0,defaultOpacity));
 		colors.add(new QColor(0,0,255,defaultOpacity));
 		colors.add(new QColor(255,0,0,defaultOpacity));
@@ -78,36 +118,42 @@ public class MotifSetView extends QFrame {
 		colors.add(new QColor(160,44,90,defaultOpacity));
 		colors.add(new QColor(204,255,0,defaultOpacity));
 		colors.add(new QColor(120,68,33,defaultOpacity));
-		
+			
 		List<QColor> cs = new ArrayList<QColor>(colors);
+			
+		for (QColor c : cs)
+			colors.add(c.darker(3));
 		
 		for (QColor c : cs)
-			colors.add(c.darker(20));
+			colors.add(c.lighter(3));
 		
 		for (QColor c : cs)
-			colors.add(c.lighter(20));
+			colors.add(c.darker(6));
 		
 		for (QColor c : cs)
-			colors.add(c.darker(40));
+			colors.add(c.lighter(6));
+	}*/
+	
+	/*
+	public QColor colorForMotif(QMotif motif) {
+		QColor col;
+		if ((col = motifColors.get(motif)) != null) return col;
 		
-		for (QColor c : cs)
-			colors.add(c.lighter(40));
-		
+		col = colorBox.nextColor();
+		setColorForMotif(motif,col);
+		return col;
 	}
 	
-	public void colorForMotif(QMotif motif) {
-		motifColors.get(motif);
-	}
-	
-	public void setColorMotif(QMotif motif, QColor color) {
+	public void setColorForMotif(QMotif motif, QColor color) {
 		motifColors.put(motif, color);
-	}
+		motif.setColor(color);
+	}*/
 	
 	public int logoWidgets() {
 		return widgets.size();
 	}
 	
-	public LabelledLogoWidget getLabelledLogoWidget(int i) {
+	public LabelledLogoView getLabelledLogoWidget(int i) {
 		return widgets.get(i);
 	}
 	
@@ -150,12 +196,12 @@ public class MotifSetView extends QFrame {
 	public QSize sizeHint() {
 		int height;
 		if (motifs != null)
-			height = (int)Math.min(LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_HEIGHT, 
+			height = (int)Math.min(LabelledLogoView.DEFAULT_TOTAL_WIDGET_HEIGHT, 
 								LogoView.MOTIF_HEIGHT * motifs.size());
 		else
-			height = LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_HEIGHT;
+			height = LabelledLogoView.DEFAULT_TOTAL_WIDGET_HEIGHT;
 		
-		return new QSize(LabelledLogoWidget.DEFAULT_TOTAL_WIDGET_WIDTH, height);
+		return new QSize(LabelledLogoView.DEFAULT_TOTAL_WIDGET_WIDTH, height);
 	}
 	
 	public void addMotifs(List<QMotif> motifs) {
@@ -169,14 +215,13 @@ public class MotifSetView extends QFrame {
 		repaint();
 	}
 
-	public LabelledLogoWidget addMotif(QMotif qm) {
+	public LabelledLogoView addMotif(QMotif qm) {
 		if (!this.motifs.contains(qm)) this.motifs.add(qm);
 		//else throw new IllegalArgumentException("The motif " + qm + " is already present on this motif set widget!");
 		
-		LabelledLogoWidget motifLogoWidget = new LabelledLogoWidget(this,qm,this.maxCols, infoContentScale);
+		qm.setColor(colorBox.colorFor(qm));
+		LabelledLogoView motifLogoWidget = new LabelledLogoView(this,qm,this.maxCols, infoContentScale);
 		layout().addWidget(motifLogoWidget);
-		
-		motifLogoWidget.setColor(motifColors.get(qm));
 		
 		widgets.add(motifLogoWidget);
 		return motifLogoWidget;
@@ -385,7 +430,7 @@ public class MotifSetView extends QFrame {
 					m.getAnnotation().setProperty("alphasum;column:"+j, precisions.get(i)[j]);
 				motifs.add(m);
 			} else {
-				System.out.println("" + i + " has no selected elements");
+				//System.out.println("" + i + " has no selected elements");
 				
 			}
 		}
@@ -449,5 +494,6 @@ public class MotifSetView extends QFrame {
 		for (QMotif m : motifs)
 			m.removeRegions(selRegs);
 	}
+
 
 }

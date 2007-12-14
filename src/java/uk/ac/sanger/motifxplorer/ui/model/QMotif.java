@@ -27,6 +27,7 @@ import uk.ac.sanger.motifxplorer.ui.graphics.MotifBoundingBox;
 import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegion;
 import uk.ac.sanger.motifxplorer.ui.graphics.SelectableMotifRegion;
 import uk.ac.sanger.motifxplorer.ui.widget.LogoView;
+import uk.ac.sanger.motifxplorer.ui.widget.MotifSetView;
 
 import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.core.QRect;
@@ -103,6 +104,7 @@ public class QMotif extends QObject {
     public static final Pattern BEGIN_PATTERN = Pattern.compile("begin:(\\d+)");
     public static final Pattern LENGTH_PATTERN = Pattern.compile("length:(\\d+)");
     public static final Pattern SET_ID_PATTERN = Pattern.compile("setId:(\\d+)");
+    public static final Pattern COLOR_PATTERN = Pattern.compile("color:(\\#\\d{6,8})");
     
     public QMotif(LogoView view, MetaMotif mm) {
     	this.setParent(view);
@@ -132,13 +134,21 @@ public class QMotif extends QObject {
 			else if (o instanceof Integer)
 				this.offset = (Integer) o;
 		}
-		if (nmicaMotif.getAnnotation().containsProperty("isSelected")) {
+		if (nmicaMotif.getAnnotation().containsProperty("isSelected"))
 			this.selected = true;
-		}
-		if (nmicaMotif.getAnnotation().containsProperty("isHighlighted")) {
+		
+		if (nmicaMotif.getAnnotation().containsProperty("isHighlighted"))
 			this.highlighted = true;
+		
+		if (nmicaMotif.getAnnotation().containsProperty("color")) {
+			System.out.println("Reading color!");
+			Object o = nmicaMotif.getAnnotation().getProperty("color");
+			if (o instanceof String)
+				this.color = new QColor((String)o);
+			else
+				throw new IllegalStateException(
+						"The color annotation is not a String as required!");
 		}
-
 		if (nmicaMotif.getAnnotation().containsProperty("selectedColumns")) {
 			Object o = nmicaMotif.getAnnotation()
 					.getProperty("selectedColumns");
@@ -164,82 +174,109 @@ public class QMotif extends QObject {
 			} while (tok.hasMoreTokens());
 		}
 		if (nmicaMotif.getAnnotation().containsProperty("motifregions")) {
-			Object motifRegsO = nmicaMotif.getAnnotation().getProperty("motifregions");
-			int num = 0;
-			if (motifRegsO instanceof Integer)
-				num = ((Integer)motifRegsO).intValue();
-			else if (motifRegsO instanceof String)
-				num = Integer.parseInt((String)motifRegsO);
-			
-			for (int i = 0; i < num; i++) {
-				if (nmicaMotif.getAnnotation().containsProperty("motifregion" + i)) {
-					Object annValue = nmicaMotif.getAnnotation().getProperty("motifregion" + i);
-					if (annValue instanceof String) {
-						String ann = (String)annValue;
-						
-						String name = null;
-						String type = null;
-						boolean selected = false;
-						int setId = 0;
-						int begin = 0;
-						int length = 0;
-						
-						System.out.println(ann);
-						Matcher nameMatcher = NAME_PATTERN.matcher(ann);
-						Matcher typeMatcher = TYPE_PATTERN.matcher(ann);
-						Matcher selectedMatcher = SELECTED_PATTERN.matcher(ann);
-						Matcher setIdMatcher = SET_ID_PATTERN.matcher(ann);
-						Matcher beginMatcher = BEGIN_PATTERN.matcher(ann);
-						Matcher lengthMatcher = LENGTH_PATTERN.matcher(ann);
-						
-						if (nameMatcher.find())
-							name = nameMatcher.group(1);
-						else {
-							System.err.println("WARN: name was not found for region " + i);
-							name = "";
-						}
-						if (typeMatcher.find())
-							type = typeMatcher.group(1);
-						else System.err.println("WARN: type was not found for region " + i);
-						if (selectedMatcher.find())
-							selected = Boolean.parseBoolean(selectedMatcher.group(1));
-						else System.err.println("WARN: selection state was not found for region " + i);
-						if (setIdMatcher.find())
-							setId = Integer.parseInt(setIdMatcher.group(1));
-						else System.err.println("WARN: setId was not found for region " + i);
-						if (beginMatcher.find())
-							begin = Integer.parseInt(beginMatcher.group(1));
-						else System.err.println("WARN: beginning position was not found for region " + i);
-						if (lengthMatcher.find())
-							length = Integer.parseInt(lengthMatcher.group(1));
-						else System.err.println("WARN: length was not found for region " + i);
-						
-						MotifRegion reg;
-						if (type.equals("SelectableMotifRegion")) {
-							SelectableMotifRegion selReg;
-							reg = selReg = new SelectableMotifRegion(this, begin, length);
-							selReg.setAnnotationSetId(setId);
-							selReg.setSelectedRegion(selected);
-						} else if (type.equals("MotifRegion")) {
-							reg = new MotifRegion(this, begin, length);
-						} else throw new IllegalArgumentException("Type \"" + type + "\" is not supported");
-						if (reg != null) {
-							System.out.println("name:" + name);
-							System.out.println("type:" + type);
-							System.out.println("sel :" + selected);
-							System.out.println("set :" + setId);
-							System.out.println("beg :" + begin);
-							System.out.println("len :" + length);
-							reg.setKept(true);
-							reg.setName(name);
-							addRegion(reg);
-						}
-					} else throw new IllegalStateException("Annotation value is not of type String");
-				} else {
-					System.err.println("WARN: missing annotation \"motifregion" + i + "\"");
-				}
+			readMotifRegions();
+		}
+	}
+
+	private void readMotifRegions() {
+		Object motifRegsO = nmicaMotif.getAnnotation().getProperty("motifregions");
+		int num = 0;
+		if (motifRegsO instanceof Integer)
+			num = ((Integer)motifRegsO).intValue();
+		else if (motifRegsO instanceof String)
+			num = Integer.parseInt((String)motifRegsO);
+		
+		for (int i = 0; i < num; i++) {
+			if (nmicaMotif.getAnnotation().containsProperty("motifregion" + i)) {
+				MotifRegion reg = readMotifRegion(i);
+				if (reg != null) addRegion(reg);
+				
+			} else {
+				System.err.println("WARN: missing annotation \"motifregion" + i + "\"");
 			}
 		}
+	}
+
+	private MotifRegion readMotifRegion(int i) {
+		Object annValue = nmicaMotif.getAnnotation().getProperty("motifregion" + i);
+		if (annValue instanceof String) {
+			String ann = (String)annValue;
+			
+			String name = null;
+			String type = null;
+			boolean selected = false;
+			int setId = 0;
+			int begin = 0;
+			int length = 0;
+			QColor regionColor = null;
+			
+			System.out.println(ann);
+			Matcher nameMatcher = NAME_PATTERN.matcher(ann);
+			Matcher typeMatcher = TYPE_PATTERN.matcher(ann);
+			Matcher selectedMatcher = SELECTED_PATTERN.matcher(ann);
+			Matcher setIdMatcher = SET_ID_PATTERN.matcher(ann);
+			Matcher beginMatcher = BEGIN_PATTERN.matcher(ann);
+			Matcher lengthMatcher = LENGTH_PATTERN.matcher(ann);
+			Matcher colorMatcher = COLOR_PATTERN.matcher(ann);
+			
+			if (nameMatcher.find())
+				name = nameMatcher.group(1);
+			else {
+				System.err.println("WARN: name was not found for region " + i);
+				name = "";
+			}
+			if (typeMatcher.find())
+				type = typeMatcher.group(1);
+			else System.err.println("WARN: type was not found for region " + i);
+			if (selectedMatcher.find())
+				selected = Boolean.parseBoolean(selectedMatcher.group(1));
+			else System.err.println("WARN: selection state was not found for region " + i);
+			if (setIdMatcher.find())
+				setId = Integer.parseInt(setIdMatcher.group(1));
+			else System.err.println("WARN: setId was not found for region " + i);
+			if (beginMatcher.find())
+				begin = Integer.parseInt(beginMatcher.group(1));
+			else System.err.println("WARN: beginning position was not found for region " + i);
+			if (lengthMatcher.find())
+				length = Integer.parseInt(lengthMatcher.group(1));
+			else System.err.println("WARN: length was not found for region " + i);
+			if (colorMatcher.find())
+				regionColor = new QColor(colorMatcher.group(1));
+			
+			//FIXME: Support region color for other types but SelectableMotifRegion
+			MotifRegion reg;
+			if (type.equals("SelectableMotifRegion")) {
+				SelectableMotifRegion selReg;
+				reg = selReg = new SelectableMotifRegion(null, this, begin, length);
+				
+				LogoView logoView = logoView();
+				MotifSetView msetView = null;
+				if (logoView != null)
+					msetView = logoView().motifSetWidget();
+				if (msetView != null)
+					selReg.setAnnotationSet(msetView.getMotifRegionSet(setId));
+				
+				selReg.setSelectedRegion(selected);
+				selReg.setBrushes(regionColor);
+			} else if (type.equals("MotifRegion")) {
+				reg = new MotifRegion(null, this, begin, length);
+			} else throw new IllegalArgumentException("Type \"" + type + "\" is not supported");
+			if (reg != null) {
+				System.out.println("name:" + name);
+				System.out.println("type:" + type);
+				System.out.println("sel :" + selected);
+				System.out.println("set :" + setId);
+				System.out.println("beg :" + begin);
+				System.out.println("len :" + length);
+				System.out.println("col :" + color);
+				reg.setKept(true);
+				reg.setName(name);
+				
+				return reg;
+			}
+		} else throw new IllegalStateException("Annotation value is not of type String");
+		
+		return null;
 	}
     
 	public void updateQMotifAnnotations() {
@@ -247,7 +284,11 @@ public class QMotif extends QObject {
 		ann.setProperty("offset", "" + this.offset);
 		ann.setProperty("isSelected", this.selected ? true : false);
 		ann.setProperty("isHighlighted", this.highlighted ? true : false);
-		
+		System.out.println("Updating properties");
+		if (this.color != null) {
+			System.out.println("Setting property color");
+			ann.setProperty("color",this.color);
+		}
 		//FIXME: Iterater rather than use the list
 		List<Integer>selCols = new ArrayList<Integer>(this.selectedColumns);
 		List<Integer>hilitedCols = new ArrayList<Integer>(this.selectedColumns);
@@ -272,14 +313,19 @@ public class QMotif extends QObject {
 			int rI = 0;
 			ann.setProperty("motifregions", this.regions.size());
 			for (MotifRegion r : regions) {
-				//example of the value: "type:SelectableMotifRegion;name:tata;selected:true;begin:1;length:2;setId=0"
+				String annotationSetStr = "";
+				if (r.getAnnotationSet() != null)
+					annotationSetStr = "setId:" + r.getAnnotationSet().getId() + ";";
+				
+				//type:SelectableMotifRegion;name:tata;selected:true;begin:1;length:2;setId=0
 				ann.setProperty("motifregion" + rI++,
 										"type:" + r.getClass().getSimpleName() + ";" +
 										"name:" + r.getName() + ";" +
 										"selected:" + r.isSelected() + ";" +
 										"begin:" + r.getBegin() + ";" +
 										"length:" + r.getLength() + ";" +
-										"setId:" + r.getAnnotationSetId());
+										annotationSetStr + 
+										"color:" + r.getColor());
 			}
 		}
 	}
@@ -637,5 +683,15 @@ public class QMotif extends QObject {
 	
 	public QColor color() {
 		return this.color;
+	}
+	
+	public LogoView logoView() {
+		QObject parent = this.parent();
+		if (parent != null)
+			if (parent instanceof LogoView)
+				return (LogoView)parent;
+			else throw new IllegalStateException("Parent is not of type LogoView");
+		else
+			return null;
 	}
 }
