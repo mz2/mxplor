@@ -1,0 +1,10 @@
+#!/bin/bash
+WRAPPER=$0
+WRAPPER_DIR=`dirname $WRAPPER`/..
+NMICA_DIR="${HOME}/workspace/NestedMICA/native"
+
+export LIB_PATH="${WRAPPER_DIR}/lib" #assuming you checked out  
+export CLASSPATH="${CLASSPATH}:${LIB_PATH}/nmica.jar:${LIB_PATH}/qtjambi.jar:${LIB_PATH}:${WRAPPER_DIR}/dist/lib/mxplor.jar:${LIB_PATH}/bjv-2-core-0.1.jar:${LIB_PATH}/biojava.jar:${LIB_PATH}/colt.jar"
+export DYLD_LIBRARY_PATH="${LIB_PATH}/lib" #Not sure if you actually need this anymore
+java -XstartOnFirstThread -Djava.library.path="${HOME}/workspace/NestedMICA/native" uk.ac.sanger.motifxplorer.app.MXplor
+
