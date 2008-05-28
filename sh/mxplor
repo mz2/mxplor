@@ -3,8 +3,10 @@ WRAPPER=$0
 WRAPPER_DIR=`dirname $WRAPPER`/..
 NMICA_DIR="${HOME}/workspace/NestedMICA/native"
 
-export LIB_PATH="${WRAPPER_DIR}/lib" #assuming you checked out  
-export CLASSPATH="${CLASSPATH}:${LIB_PATH}/nmica.jar:${LIB_PATH}/qtjambi.jar:${LIB_PATH}:${WRAPPER_DIR}/dist/lib/mxplor.jar:${LIB_PATH}/bjv-2-core-0.1.jar:${LIB_PATH}/biojava.jar:${LIB_PATH}/colt.jar"
+LIB_PATH="${WRAPPER_DIR}/lib" #assuming you checked out  
+CLASSPATH="${CLASSPATH}:${LIB_PATH}/nmica.jar:${LIB_PATH}/qtjambi.jar:${LIB_PATH}:${WRAPPER_DIR}/dist/lib/mxplor.jar:${LIB_PATH}/bjv2-core-0.1.jar:${LIB_PATH}/biojava.jar:${LIB_PATH}/colt.jar"
+#CLASSPATH="{CLASSPATH}:${LIB_PATH}/nmica.jar:${LIB_PATH}:${LIB_PATH}/qtjambi.jar:${LIB_PATH}:${WRAPPER_DIR}/lib/biojava.jar:${WRAPPER_DIR}/lib/bjv2-core-0.1.jar:${WRAPPER_DIR}/dist/lib/mxplor.jar:${LIB_PATH}/colt.jar"
+#echo $CLASSPATH
 export DYLD_LIBRARY_PATH="${LIB_PATH}/lib" #Not sure if you actually need this anymore
-java -XstartOnFirstThread -Djava.library.path="${HOME}/workspace/NestedMICA/native" uk.ac.sanger.motifxplorer.app.MXplor
+java -cp "$CLASSPATH" -XstartOnFirstThread -Djava.library.path="${NMICA_HOME}/native" uk.ac.sanger.motifxplorer.app.MXplor $@
 
