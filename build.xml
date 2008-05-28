@@ -34,7 +34,6 @@
 		<tstamp/>
 		<!-- Create the build directory structure used by compile -->
 		<mkdir dir="${build}"/>
-		<mkdir dir="${lib}/tmp"/>
 		<mkdir dir="${dist}"/>
 		<mkdir dir="${dist}/lib"/>
 	</target>
@@ -45,8 +44,8 @@
 		<javac srcdir="${src}" 
 				destdir="${build}" 
 				classpathref="libraries" 
-				target="1.6"
-				source="1.6"/>
+				target="1.5"
+				source="1.5"/>
 		
 	</target>
 
@@ -60,7 +59,6 @@
 			<fileset dir="${resources}"/>
 			<fileset dir="${build}" />
 			<fileset dir="${conf}" />
-			<fileset dir="${lib}/tmp/" />
 		</jar>
 	</target>
 
@@ -73,11 +71,6 @@
 	</target>
 
 	<target name="libjar">
-		<javac srcdir="${src}" 
-				destdir="${unpacklib}" 
-				classpathref="libraries" 
-				target="1.6"
-				source="1.6"/>
 		<jar 	jarfile="${dist}/lib/libs.jar" 
 				basedir="${unpacklib}" 
 				manifest="${manifest.file.main}" 
@@ -92,7 +85,7 @@
             name="mXplor"
             mainclass="uk.ac.sanger.motifxplorer.app.MXplor" 
 			icon="./images/icon.icns"
-			jvmversion="1.6+"
+			jvmversion="1.5"
 			startonmainthread="true">
 			<documenttype name="XMS motif set"
                     extensions="xms" 
