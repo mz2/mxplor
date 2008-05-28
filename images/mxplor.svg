@@ -20,6 +20,28 @@
   <defs
      id="defs4">
     <linearGradient
+       id="linearGradient3278">
+      <stop
+         id="stop3280"
+         offset="0"
+         style="stop-color:#001854;stop-opacity:1;" />
+      <stop
+         id="stop3282"
+         offset="1"
+         style="stop-color:#1293ff;stop-opacity:1;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3208">
+      <stop
+         style="stop-color:#0067f2;stop-opacity:1;"
+         offset="0"
+         id="stop3210" />
+      <stop
+         style="stop-color:#002454;stop-opacity:1;"
+         offset="1"
+         id="stop3212" />
+    </linearGradient>
+    <linearGradient
        id="linearGradient3231">
       <stop
          style="stop-color:#1d79e0;stop-opacity:1;"
@@ -78,11 +100,11 @@
     <linearGradient
        id="linearGradient3155">
       <stop
-         style="stop-color:#001754;stop-opacity:1;"
+         style="stop-color:#d5e1ff;stop-opacity:1;"
          offset="0"
          id="stop3157" />
       <stop
-         style="stop-color:#005ba8;stop-opacity:1;"
+         style="stop-color:#1293ff;stop-opacity:1;"
          offset="1"
          id="stop3159" />
     </linearGradient>
@@ -126,18 +148,6 @@
        y1="295.85999"
        x2="499.20151"
        y2="587.34064" />
-    <filter
-       inkscape:collect="always"
-       x="-0.16919984"
-       width="1.3383997"
-       y="-0.20025192"
-       height="1.4005038"
-       id="filter3585">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="13.590951"
-         id="feGaussianBlur3587" />
-    </filter>
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient3241"
@@ -148,18 +158,6 @@
        y1="295.85999"
        x2="499.20151"
        y2="587.34064" />
-    <filter
-       inkscape:collect="always"
-       x="-0.20173827"
-       width="1.4034765"
-       y="-0.2387619"
-       height="1.4775238"
-       id="filter3743">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="16.204596"
-         id="feGaussianBlur3745" />
-    </filter>
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient3155"
@@ -258,7 +256,7 @@
        xlink:href="#linearGradient3183"
        id="radialGradient3269"
        gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(0.9891909,0,0,1.0270622,-58.486889,-14.97851)"
+       gradientTransform="matrix(1.3764799,0,0,1.4291786,-129.10828,-253.85734)"
        cx="355.71428"
        cy="643.79074"
        fx="355.71428"
@@ -275,6 +273,93 @@
        fx="355.71428"
        fy="643.79074"
        r="270" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3925"
+       id="linearGradient3195"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.5588235,0,0,0.5588235,70.237043,401.80526)"
+       x1="347.31662"
+       y1="295.85999"
+       x2="499.20151"
+       y2="587.34064" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3231"
+       id="linearGradient3199"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.5588235,0,0,0.5588235,77.48208,408.9627)"
+       x1="347.31662"
+       y1="295.85999"
+       x2="499.20151"
+       y2="587.34064" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3155"
+       id="linearGradient3202"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.55044,0,0,0.5673347,66.971165,401.77659)"
+       x1="743.05621"
+       y1="316.76093"
+       x2="741.54883"
+       y2="580.57324" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3155"
+       id="linearGradient3206"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.5588235,0,0,0.5588236,69.441495,395.74915)"
+       x1="223.37448"
+       y1="316.76093"
+       x2="223.37448"
+       y2="580.57324" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3208"
+       id="radialGradient3214"
+       cx="373.51976"
+       cy="656.0452"
+       fx="373.51976"
+       fy="656.0452"
+       r="285.79425"
+       gradientTransform="matrix(1,0,0,1.0044166,1.4285714,2.8167996)"
+       gradientUnits="userSpaceOnUse" />
+    <filter
+       inkscape:collect="always"
+       id="filter3264">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="6.0154486"
+         id="feGaussianBlur3266" />
+    </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3278"
+       id="linearGradient3274"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.5588235,0,0,0.5588236,75.482271,401.34794)"
+       x1="223.37448"
+       y1="316.76093"
+       x2="223.37448"
+       y2="580.57324" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3278"
+       id="linearGradient3276"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.55044,0,0,0.5673347,72.921323,407.46069)"
+       x1="743.05621"
+       y1="316.76093"
+       x2="741.54883"
+       y2="580.57324" />
+    <filter
+       inkscape:collect="always"
+       id="filter3468">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="2.7915365"
+         id="feGaussianBlur3470" />
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -287,14 +372,14 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
-     inkscape:cx="428.16715"
-     inkscape:cy="375.70876"
+     inkscape:cx="378.28442"
+     inkscape:cy="399.99447"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      inkscape:window-width="795"
      inkscape:window-height="686"
-     inkscape:window-x="124"
-     inkscape:window-y="81" />
+     inkscape:window-x="293"
+     inkscape:window-y="78" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -311,97 +396,91 @@
      inkscape:groupmode="layer"
      id="layer1">
     <rect
-       style="fill:#004aab;fill-opacity:1;stroke:none;stroke-width:5.69999981;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="rect3241"
-       width="574.47534"
-       height="574.47534"
-       x="91.638237"
-       y="374.03027"
-       ry="63.830601"
-       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_32x32.png"
-       inkscape:export-xdpi="4.98"
-       inkscape:export-ydpi="4.98" />
-    <rect
-       style="fill:#4193ff;fill-opacity:1;stroke:none;stroke-width:5.69999981;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:url(#radialGradient3214);fill-opacity:1;stroke:none;stroke-width:5.69999981;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect3181"
        width="571.5885"
        height="574.11298"
-       x="87.72551"
-       y="368.98871"
-       ry="63.790333"
-       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_32x32.png"
-       inkscape:export-xdpi="4.98"
-       inkscape:export-ydpi="4.98" />
-    <rect
-       style="fill:url(#radialGradient3269);fill-opacity:1;stroke:none;stroke-width:5.69999981;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="rect3171"
-       width="534.16309"
-       height="554.61359"
-       x="26.300959"
-       y="368.92786"
-       ry="61.623726"
-       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_32x32.png"
-       inkscape:export-xdpi="4.98"
-       inkscape:export-ydpi="4.98" />
-    <g
-       id="g3244"
-       transform="translate(21.813888,20.450516)"
-       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_32x32.png"
-       inkscape:export-xdpi="4.98"
-       inkscape:export-ydpi="4.98">
-      <text
-         inkscape:export-ydpi="5.25"
-         inkscape:export-xdpi="5.25"
-         inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_32x32.png"
-         transform="scale(0.984998,1.0152304)"
-         id="text2160"
-         y="667.54102"
-         x="94.839706"
-         style="font-size:152.33372498px;font-style:normal;font-weight:bold;fill:url(#linearGradient3253);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Gujarati MT"
-         xml:space="preserve"><tspan
-           style="font-style:italic;font-weight:bold;fill:url(#linearGradient3253);fill-opacity:1;font-family:Gujarati MT"
-           y="667.54102"
-           x="94.839706"
-           id="tspan2162"
-           sodipodi:role="line">m</tspan></text>
-      <path
-         inkscape:export-ydpi="5.25"
-         inkscape:export-xdpi="5.25"
-         inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_32x32.png"
-         sodipodi:nodetypes="cccccccssscccsccccscscsccccccccsscscscccssccsscscccccssccccccccsscc"
-         id="text2180"
-         d="M 344.4552,666.3028 L 336.02963,710.70536 L 309.65393,710.70536 L 331.70694,593.95985 L 358.08265,593.95985 L 355.66487,606.34422 C 359.67002,601.41069 363.87059,597.78599 368.26659,595.47013 C 372.66248,593.1041 377.4736,591.92104 382.69996,591.92095 C 391.93137,591.92104 399.23353,594.94161 404.60645,600.98269 C 409.97917,607.02393 412.66558,615.25501 412.66568,625.67596 C 412.66558,632.17025 411.71313,638.48831 409.80832,644.63012 C 407.95215,650.772 405.26575,656.36007 401.74908,661.39435 C 397.30419,667.73758 392.27328,672.54534 386.65632,675.81763 C 381.08804,679.08993 375.10467,680.72607 368.70619,680.72607 C 363.08909,680.72607 358.30239,679.56818 354.34609,677.2524 C 350.43853,674.88629 347.14158,671.23642 344.4552,666.3028 M 372.00315,611.55473 C 365.26264,611.5548 359.74329,614.77675 355.44507,621.2206 C 351.19562,627.61422 349.07091,635.94598 349.07095,646.21592 C 349.07091,650.84751 350.26758,654.49737 352.66097,657.16553 C 355.10313,659.78338 358.47335,661.09231 362.77165,661.09229 C 369.36552,661.09231 374.81161,657.94587 379.10993,651.65297 C 383.40813,645.30978 385.55726,637.20456 385.55732,627.33728 C 385.55726,622.20235 384.385,618.30077 382.04057,615.63252 C 379.74484,612.91406 376.39903,611.5548 372.00315,611.55473 M 430.83673,561.74977 L 457.21243,561.74977 L 435.01289,679.25044 L 408.71046,679.25044 L 430.83673,561.74977 M 498.07752,611.96697 C 491.28816,611.96703 485.69555,615.13864 481.29964,621.4818 C 476.90365,627.82507 474.70568,635.90512 474.70571,645.72198 C 474.70568,651.05836 475.87794,655.13615 478.22248,657.95533 C 480.61579,660.72422 484.0837,662.10865 488.62622,662.10864 C 495.41547,662.10865 501.00809,658.93704 505.4041,652.5938 C 509.79998,646.20026 511.99795,638.06987 511.99802,628.20259 C 511.99795,622.91663 510.80128,618.88919 508.408,616.12026 C 506.06343,613.35146 502.61993,611.96703 498.07752,611.96697 M 500.20223,592.63523 C 512.41313,592.63532 522.01094,595.8321 528.9957,602.22559 C 535.98028,608.61922 539.47261,617.32856 539.47271,628.35362 C 539.47261,634.74723 538.37363,640.9646 536.17574,647.00571 C 533.97768,652.99657 530.77841,658.48395 526.57792,663.4679 C 521.59576,669.40839 515.71008,673.88891 508.92086,676.90949 C 502.13149,679.93007 494.5607,681.44036 486.20845,681.44036 C 474.14398,681.44036 464.61943,678.24358 457.63478,671.85001 C 450.69894,665.45646 447.23102,656.74712 447.23103,645.72198 C 447.23102,639.37879 448.35443,633.1866 450.60125,627.14539 C 452.84806,621.05394 456.07175,615.49103 460.27235,610.45667 C 465.15672,604.61695 470.96913,600.18677 477.70961,597.16611 C 484.49888,594.14561 491.9964,592.63532 500.20223,592.63523 M 607.53779,617.70606 C 605.73049,616.64892 603.72789,615.84344 601.52999,615.2896 C 599.33195,614.7359 596.96302,614.45901 594.4232,614.45894 C 587.73154,614.45901 582.16334,616.6741 577.7186,621.10422 C 573.3226,625.53446 570.34313,631.92803 568.78017,640.28492 L 561.30705,679.25044 L 535.00462,679.25044 L 550.97657,594.67413 L 577.35227,594.67413 L 574.4949,609.17292 C 577.96277,603.83664 582.28545,599.75885 587.46295,596.93957 C 592.68918,594.0701 598.47718,592.63532 604.82695,592.63523 C 605.75491,592.63532 606.80505,592.68566 607.97739,592.78626 C 609.14956,592.88703 610.54161,593.03807 612.15353,593.23935 L 607.53779,617.70606"
-         style="font-size:152.33372498px;font-style:normal;font-weight:bold;fill:url(#linearGradient3255);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Gujarati MT" />
-      <text
-         inkscape:export-ydpi="5.25"
-         inkscape:export-xdpi="5.25"
-         inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_32x32.png"
-         transform="scale(0.9926726,1.0073815)"
-         id="text3225"
-         y="705.53693"
-         x="187.57831"
-         style="font-size:223.4367218px;font-style:normal;font-weight:normal;fill:url(#linearGradient3257);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Gujarati MT"
-         xml:space="preserve"><tspan
-           style="font-style:italic;font-weight:bold;fill:url(#linearGradient3257);fill-opacity:1"
-           y="705.53693"
-           x="187.57831"
-           id="tspan3227"
-           sodipodi:role="line">X</tspan></text>
-      <text
-         inkscape:export-ydpi="5.25"
-         inkscape:export-xdpi="5.25"
-         inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_32x32.png"
-         transform="scale(0.9926726,1.0073815)"
-         id="text2164"
-         y="702.63385"
-         x="183.21149"
-         style="font-size:223.4367218px;font-style:normal;font-weight:normal;fill:url(#linearGradient3259);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Gujarati MT"
-         xml:space="preserve"><tspan
-           style="font-style:italic;font-weight:bold;fill:url(#linearGradient3259);fill-opacity:1"
-           y="702.63385"
-           x="183.21149"
-           id="tspan2166"
-           sodipodi:role="line">X</tspan></text>
-    </g>
+       x="89.154083"
+       y="374.703"
+       ry="285.79425"
+       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_128x128.png"
+       inkscape:export-xdpi="20.15"
+       inkscape:export-ydpi="20.15" />
+    <text
+       xml:space="preserve"
+       style="font-size:152.33372498px;font-style:normal;font-weight:bold;fill:url(#linearGradient3274);fill-opacity:1.0;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Gujarati MT;"
+       x="123.0266"
+       y="693.28345"
+       id="text3268"
+       transform="scale(0.984998,1.0152304)"
+       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_128x128.png"
+       inkscape:export-xdpi="20.15"
+       inkscape:export-ydpi="20.15"><tspan
+         sodipodi:role="line"
+         id="tspan3270"
+         x="123.0266"
+         y="693.28345"
+         style="font-style:italic;font-weight:bold;fill:url(#linearGradient3274);fill-opacity:1.0;stroke:none;stroke-opacity:1;font-family:Gujarati MT">m</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:152.33372498px;font-style:normal;font-weight:bold;fill:url(#linearGradient3206);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Gujarati MT"
+       x="116.98582"
+       y="687.68469"
+       id="text2160"
+       transform="scale(0.984998,1.0152304)"
+       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_128x128.png"
+       inkscape:export-xdpi="20.15"
+       inkscape:export-ydpi="20.15"><tspan
+         sodipodi:role="line"
+         id="tspan2162"
+         x="116.98582"
+         y="687.68469"
+         style="font-style:italic;font-weight:bold;fill:url(#linearGradient3206);fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Gujarati MT">m</tspan></text>
+    <path
+       style="font-size:152.33372498px;font-style:normal;font-weight:bold;fill:url(#linearGradient3276);fill-opacity:1.0;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Gujarati MT;"
+       d="M 372.21925,692.43742 L 363.79368,736.83998 L 337.41798,736.83998 L 359.47099,620.09447 L 385.8467,620.09447 L 383.42892,632.47884 C 387.43407,627.54531 391.63464,623.92061 396.03064,621.60475 C 400.42653,619.23872 405.23765,618.05566 410.46401,618.05557 C 419.69542,618.05566 426.99758,621.07623 432.3705,627.11731 C 437.74322,633.15855 440.42963,641.38963 440.42973,651.81058 C 440.42963,658.30487 439.47718,664.62293 437.57237,670.76474 C 435.7162,676.90662 433.0298,682.49469 429.51313,687.52897 C 425.06824,693.8722 420.03733,698.67996 414.42037,701.95225 C 408.85209,705.22455 402.86872,706.86069 396.47024,706.86069 C 390.85314,706.86069 386.06644,705.7028 382.11014,703.38702 C 378.20258,701.02091 374.90563,697.37104 372.21925,692.43742 M 399.7672,637.68935 C 393.02669,637.68942 387.50734,640.91137 383.20912,647.35522 C 378.95967,653.74884 376.83496,662.0806 376.835,672.35054 C 376.83496,676.98213 378.03163,680.63199 380.42502,683.30015 C 382.86718,685.918 386.2374,687.22693 390.5357,687.22691 C 397.12957,687.22693 402.57566,684.08049 406.87398,677.78759 C 411.17218,671.4444 413.32131,663.33918 413.32137,653.4719 C 413.32131,648.33697 412.14905,644.43539 409.80462,641.76714 C 407.50889,639.04868 404.16308,637.68942 399.7672,637.68935 M 458.60078,587.88439 L 484.97648,587.88439 L 462.77694,705.38506 L 436.47451,705.38506 L 458.60078,587.88439 M 525.84157,638.10159 C 519.05221,638.10165 513.4596,641.27326 509.06369,647.61642 C 504.6677,653.95969 502.46973,662.03974 502.46976,671.8566 C 502.46973,677.19298 503.64199,681.27077 505.98653,684.08995 C 508.37984,686.85884 511.84775,688.24327 516.39027,688.24326 C 523.17952,688.24327 528.77214,685.07166 533.16815,678.72842 C 537.56403,672.33488 539.762,664.20449 539.76207,654.33721 C 539.762,649.05125 538.56533,645.02381 536.17205,642.25488 C 533.82748,639.48608 530.38398,638.10165 525.84157,638.10159 M 527.96628,618.76985 C 540.17718,618.76994 549.77499,621.96672 556.75975,628.36021 C 563.74433,634.75384 567.23666,643.46318 567.23676,654.48824 C 567.23666,660.88185 566.13768,667.09922 563.93979,673.14033 C 561.74173,679.13119 558.54246,684.61857 554.34197,689.60252 C 549.35981,695.54301 543.47413,700.02353 536.68491,703.04411 C 529.89554,706.06469 522.32475,707.57498 513.9725,707.57498 C 501.90803,707.57498 492.38348,704.3782 485.39883,697.98463 C 478.46299,691.59108 474.99507,682.88174 474.99508,671.8566 C 474.99507,665.51341 476.11848,659.32122 478.3653,653.28001 C 480.61211,647.18856 483.8358,641.62565 488.0364,636.59129 C 492.92077,630.75157 498.73318,626.32139 505.47366,623.30073 C 512.26293,620.28023 519.76045,618.76994 527.96628,618.76985 M 635.30184,643.84068 C 633.49454,642.78354 631.49194,641.97806 629.29404,641.42422 C 627.096,640.87052 624.72707,640.59363 622.18725,640.59356 C 615.49559,640.59363 609.92739,642.80872 605.48265,647.23884 C 601.08665,651.66908 598.10718,658.06265 596.54422,666.41954 L 589.0711,705.38506 L 562.76867,705.38506 L 578.74062,620.80875 L 605.11632,620.80875 L 602.25895,635.30754 C 605.72682,629.97126 610.0495,625.89347 615.227,623.07419 C 620.45323,620.20472 626.24123,618.76994 632.591,618.76985 C 633.51896,618.76994 634.5691,618.82028 635.74144,618.92088 C 636.91361,619.02165 638.30566,619.17269 639.91758,619.37397 L 635.30184,643.84068"
+       id="path3272"
+       sodipodi:nodetypes="cccccccssscccsccccscscsccccccccsscscscccssccsscscccccssccccccccsscc"
+       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_128x128.png"
+       inkscape:export-xdpi="20.15"
+       inkscape:export-ydpi="20.15" />
+    <path
+       style="font-size:152.33372498px;font-style:normal;font-weight:bold;fill:url(#linearGradient3202);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Gujarati MT"
+       d="M 366.26909,686.75332 L 357.84352,731.15588 L 331.46782,731.15588 L 353.52083,614.41037 L 379.89654,614.41037 L 377.47876,626.79474 C 381.48391,621.86121 385.68448,618.23651 390.08048,615.92065 C 394.47637,613.55462 399.28749,612.37156 404.51385,612.37147 C 413.74526,612.37156 421.04742,615.39213 426.42034,621.43321 C 431.79306,627.47445 434.47947,635.70553 434.47957,646.12648 C 434.47947,652.62077 433.52702,658.93883 431.62221,665.08064 C 429.76604,671.22252 427.07964,676.81059 423.56297,681.84487 C 419.11808,688.1881 414.08717,692.99586 408.47021,696.26815 C 402.90193,699.54045 396.91856,701.17659 390.52008,701.17659 C 384.90298,701.17659 380.11628,700.0187 376.15998,697.70292 C 372.25242,695.33681 368.95547,691.68694 366.26909,686.75332 M 393.81704,632.00525 C 387.07653,632.00532 381.55718,635.22727 377.25896,641.67112 C 373.00951,648.06474 370.8848,656.3965 370.88484,666.66644 C 370.8848,671.29803 372.08147,674.94789 374.47486,677.61605 C 376.91702,680.2339 380.28724,681.54283 384.58554,681.54281 C 391.17941,681.54283 396.6255,678.39639 400.92382,672.10349 C 405.22202,665.7603 407.37115,657.65508 407.37121,647.7878 C 407.37115,642.65287 406.19889,638.75129 403.85446,636.08304 C 401.55873,633.36458 398.21292,632.00532 393.81704,632.00525 M 452.65062,582.20029 L 479.02632,582.20029 L 456.82678,699.70096 L 430.52435,699.70096 L 452.65062,582.20029 M 519.89141,632.41749 C 513.10205,632.41755 507.50944,635.58916 503.11353,641.93232 C 498.71754,648.27559 496.51957,656.35564 496.5196,666.1725 C 496.51957,671.50888 497.69183,675.58667 500.03637,678.40585 C 502.42968,681.17474 505.89759,682.55917 510.44011,682.55916 C 517.22936,682.55917 522.82198,679.38756 527.21799,673.04432 C 531.61387,666.65078 533.81184,658.52039 533.81191,648.65311 C 533.81184,643.36715 532.61517,639.33971 530.22189,636.57078 C 527.87732,633.80198 524.43382,632.41755 519.89141,632.41749 M 522.01612,613.08575 C 534.22702,613.08584 543.82483,616.28262 550.80959,622.67611 C 557.79417,629.06974 561.2865,637.77908 561.2866,648.80414 C 561.2865,655.19775 560.18752,661.41512 557.98963,667.45623 C 555.79157,673.44709 552.5923,678.93447 548.39181,683.91842 C 543.40965,689.85891 537.52397,694.33943 530.73475,697.36001 C 523.94538,700.38059 516.37459,701.89088 508.02234,701.89088 C 495.95787,701.89088 486.43332,698.6941 479.44867,692.30053 C 472.51283,685.90698 469.04491,677.19764 469.04492,666.1725 C 469.04491,659.82931 470.16832,653.63712 472.41514,647.59591 C 474.66195,641.50446 477.88564,635.94155 482.08624,630.90719 C 486.97061,625.06747 492.78302,620.63729 499.5235,617.61663 C 506.31277,614.59613 513.81029,613.08584 522.01612,613.08575 M 629.35168,638.15658 C 627.54438,637.09944 625.54178,636.29396 623.34388,635.74012 C 621.14584,635.18642 618.77691,634.90953 616.23709,634.90946 C 609.54543,634.90953 603.97723,637.12462 599.53249,641.55474 C 595.13649,645.98498 592.15702,652.37855 590.59406,660.73544 L 583.12094,699.70096 L 556.81851,699.70096 L 572.79046,615.12465 L 599.16616,615.12465 L 596.30879,629.62344 C 599.77666,624.28716 604.09934,620.20937 609.27684,617.39009 C 614.50307,614.52062 620.29107,613.08584 626.64084,613.08575 C 627.5688,613.08584 628.61894,613.13618 629.79128,613.23678 C 630.96345,613.33755 632.3555,613.48859 633.96742,613.68987 L 629.35168,638.15658"
+       id="text2180"
+       sodipodi:nodetypes="cccccccssscccsccccscscsccccccccsscscscccssccsscscccccssccccccccsscc"
+       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_128x128.png"
+       inkscape:export-xdpi="20.15"
+       inkscape:export-ydpi="20.15" />
+    <text
+       xml:space="preserve"
+       style="font-size:223.4367218px;font-style:normal;font-weight:normal;fill:url(#linearGradient3199);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Gujarati MT;filter:url(#filter3468)"
+       x="218.18793"
+       y="737.18243"
+       id="text3225"
+       transform="scale(0.9926726,1.0073815)"
+       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_128x128.png"
+       inkscape:export-xdpi="20.15"
+       inkscape:export-ydpi="20.15"><tspan
+         sodipodi:role="line"
+         id="tspan3227"
+         x="218.18793"
+         y="737.18243"
+         style="font-style:italic;font-weight:bold;fill:url(#linearGradient3199);fill-opacity:1;stroke:none;stroke-opacity:1">X</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:223.4367218px;font-style:normal;font-weight:normal;fill:url(#linearGradient3195);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Gujarati MT;"
+       x="210.94287"
+       y="730.02502"
+       id="text2164"
+       transform="scale(0.9926726,1.0073815)"
+       inkscape:export-filename="/Users/mz2/workspace/MotifXplorer/images/icon_128x128.png"
+       inkscape:export-xdpi="20.15"
+       inkscape:export-ydpi="20.15"><tspan
+         sodipodi:role="line"
+         id="tspan2166"
+         x="210.94287"
+         y="730.02502"
+         style="font-style:italic;font-weight:bold;fill:url(#linearGradient3195);fill-opacity:1;stroke:none;stroke-opacity:1">X</tspan></text>
   </g>
 </svg>
