@@ -15,8 +15,6 @@ public class ReplaceMotifCommand extends QUndoCommand {
 		super(parent);
 		this.newMotif = newMotif;
 		this.oldMotif = widget.getMotif();
-		
-
 	}
 	
 	public void undo() {

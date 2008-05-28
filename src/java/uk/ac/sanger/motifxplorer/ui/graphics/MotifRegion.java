@@ -2,7 +2,7 @@ package uk.ac.sanger.motifxplorer.ui.graphics;
 
 import java.util.Iterator;
 
-import net.derkholm.nmica.model.metamotif.MetaMotifIOTools;
+import net.derkholm.nmica.metamotif.MetaMotifIOTools;
 import net.derkholm.nmica.motif.Motif;
 
 import org.biojava.bio.BioError;
@@ -16,7 +16,6 @@ import org.biojava.bio.symbol.Symbol;
 
 import uk.ac.sanger.motifxplorer.ui.model.QDistribution;
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
-import uk.ac.sanger.motifxplorer.ui.widget.LogoView;
 
 import com.trolltech.qt.core.QPointF;
 import com.trolltech.qt.core.QRectF;

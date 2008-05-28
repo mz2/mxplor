@@ -30,10 +30,10 @@ public class MotifLabelLineEdit extends QLineEdit {
 	private void init(QMotif motif) {
 		this.motif = motif;
 		setText(motif.getNmicaMotif().getName());
-		System.out.println(text());
+		//System.out.println(text());
 		if (this.motif != null && this.motif.color() != null) {
 			QColor color = new QColor(this.motif.color());
-			System.out.println(color);
+			//System.out.println(color);
 			color.setAlpha(ALPHA_OFFSET);
 			brush = new QBrush(color);
 		}

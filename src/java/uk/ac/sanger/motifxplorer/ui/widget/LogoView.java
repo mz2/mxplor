@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import net.derkholm.nmica.model.metamotif.MetaMotif;
-import net.derkholm.nmica.model.metamotif.MetaMotifIOTools;
+import net.derkholm.nmica.metamotif.MetaMotif;
+import net.derkholm.nmica.metamotif.MetaMotifIOTools;
 import net.derkholm.nmica.motif.Motif;
 import net.derkholm.nmica.motif.MotifIOTools;
 
@@ -20,6 +20,7 @@ import org.biojava.bio.dist.Distribution;
 import org.biojava.bio.seq.io.SymbolTokenization;
 import org.biojava.bio.symbol.IllegalSymbolException;
 
+import uk.ac.sanger.motifxplorer.cmd.ShiftCommand;
 import uk.ac.sanger.motifxplorer.ui.graphics.BoundaryItem;
 import uk.ac.sanger.motifxplorer.ui.graphics.MotifBoundingBox;
 import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegion;
@@ -232,10 +233,16 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	private int METAMOTIF_OPACITY = 20;
 	private int NONMETAMOTIF_OPACITY = 150;
 	private boolean infoContentScale;
+	private boolean firstTime = true;
+	private boolean offsetApplied;
 	
-	
-	
-	public LogoView(QWidget parent, QSize widgetSize, QMotif m, int maxCols, int xOffset, boolean infoContentScale) {
+	public LogoView(
+			QWidget parent, 
+			QSize widgetSize, 
+			QMotif m, 
+			int maxCols, 
+			int xOffset, 
+			boolean infoContentScale) {
 		super(parent);
 		setParent(parent);
 		this.infoContentScale = infoContentScale;
@@ -249,15 +256,12 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		
 		setResizeAnchor(QGraphicsView.ViewportAnchor.NoAnchor);
 		setTransformationAnchor(QGraphicsView.ViewportAnchor.NoAnchor);
-		//scene().setSceneRect(0, 0, widgetSize.width(), widgetSize.height());
-
 		setRenderHint(QPainter.RenderHint.Antialiasing);
 		setFrameStyle(QFrame.Shape.VLine.value());
 		setFocusPolicy(Qt.FocusPolicy.ClickFocus);
 		setAutoFillBackground(false);
 		
 		setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed);
-		//scene().setSceneRect(new QRectF(rect()));		
 		setUpFont();
 		this.xOffset = xOffset;
 		
@@ -448,9 +452,9 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	
 	protected void resizeEvent(QResizeEvent e) {
 		//setUpFont();
-		System.out.println(e.size().width());
-		System.out.println(this.rect().width());
-		System.out.println();
+		//System.out.println(e.size().width());
+		//System.out.println(this.rect().width());
+		//System.out.println();
 		//borderItem.rect().setWidth(e.size().width());
 		borderItem.setRect(new QRectF(PADDING, 
 									  PADDING,
@@ -538,11 +542,11 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		if (e.modifiers().isSet(Qt.KeyboardModifier.ShiftModifier)) {
 			//this.toggleIsSelected();
 			if (lastSelectedColumn <= column) {
-				for (int i = (lastSelectedColumn + 1); i <= column;i++) {
+				for (int i = (lastSelectedColumn + 1); i <= (column);i++) {
 					toggleSelection(i);
 				}
 			} else {
-				for (int i = column; i <= (lastSelectedColumn - 1);i++) {
+				for (int i = column; i <= (lastSelectedColumn);i++) {
 					toggleSelection(i);
 				}
 			}
@@ -560,11 +564,24 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 
 
 	public void mouseDoubleClickEvent(QMouseEvent e) {
-		motif.toggleSelected();
-		if (motif.isSelected()) {
-			borderItem.setBrush(selectedBrush);
-		} else {
-			borderItem.setBrush(normalBrush);
+		if (e.modifiers().isSet(Qt.KeyboardModifier.ControlModifier)) {
+			if (!e.modifiers().isSet(Qt.KeyboardModifier.AltModifier)) {
+				for (int j = 0; j < motifSetView().logoWidgets(); j++) {
+					LogoView logo = motifSetView().getLabelledLogoWidget(j).getLogo();
+					if (logo != this && logo.getMotif().isSelected()) {
+						logo.getMotif().toggleSelected();
+						logo.borderItem.setBrush(normalBrush);
+					}
+				}
+			}
+			
+			motif.toggleSelected();
+			if (motif.isSelected()) {
+				borderItem.setBrush(selectedBrush);
+			} else {
+				borderItem.setBrush(normalBrush);
+			}
+	
 		}
 		super.mouseDoubleClickEvent(e);
 	}
@@ -794,8 +811,8 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	}
 
 	public void keyPressEvent(QKeyEvent e) {
-
-		MotifSetView msetWidget = motifSetWidget();
+		/*
+		MotifSetView msetWidget = motifSetView();
 		if (msetWidget != null)
 			msetWidget.keyPressEvent(e);
 		else {
@@ -807,6 +824,7 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 		}
 		
 		super.keyPressEvent(e);
+		*/
 	}
 	
 	protected void enterEvent(QEvent e) {
@@ -831,22 +849,48 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	}
 	*/
 	
+	/*
 	public void moveToRight() {
-		moveBy(1);
+		System.err.println("Move to right");
+		if (motifSetView() != null) {
+			motifSetView().getUndoStack().push(
+				new ShiftCommand(motifSetView().getSelectedMotifs(),1,null));
+		} else {
+			moveBy(1);
+		}
 	}
 	
 	//TODO: Select same column for all motifs
 
 	public void moveToLeft() {
-		moveBy(-1);
-	}
+		System.err.println("Move to left");
+		if (motifSetView() != null) {
+			motifSetView().getUndoStack().push(
+				new ShiftCommand(motifSetView().getSelectedMotifs(),-1,null));
+		} else {
+			moveBy(-1);
+		}
+	}*/
 	
-	public void moveBy(int i) {
-		motif.moveToLeft();
+	private void moveItemsBy(int i) {
 		for (QGraphicsItemInterface item : items())
 			if (item instanceof MotifBoundingBox)
 				item.moveBy(blockWidth() * i, 0);
+	}
+	
+	public void moveBy(int i) {
+		System.out.println(this.getMotif().getNmicaMotif().getName() + " i:" + i);
+		moveItemsBy(i);
+		motif.moveBy(i);
 		repaint();
+	}
+	
+	public void moveTo(int i) {
+		for (QGraphicsItemInterface item : items())
+			if (item instanceof MotifBoundingBox)
+				item.moveBy(blockWidth() * (motif.getOffset() - i), 0);
+		
+		motif.moveTo(i);
 	}
 	
 	/*
@@ -901,11 +945,11 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	 */
 	public void setMotif(QMotif motif) {
 		this.motif = motif;
-		if (this.motif != null) {
-			this.motif.setupDists();
+		if (motif != null) {
+			motif.setupDists();
 			motif.setParent(this);
 			if (motif.getHorizontalOffset() == 0) //if the motif offset hasn't been set up yet
-				this.motif.setHorizontalOffset(xOffset);
+				motif.setHorizontalOffset(xOffset);
 			
 			if (!motif.isMetaMotif())
 				this.setUpLogo(motif);
@@ -916,6 +960,15 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 					for (int i=0; i < qmotifs.length; i++)
 						setUpLogo(qmotifs[i]);
 				}
+			
+			/*if (!offsetApplied) {
+				System.out.println("Offset hasn't been applied");
+				moveBy(motif.getOffset());
+				offsetApplied = true;
+			} else {*/
+				//System.out.println("Offset has been applied");
+				moveItemsBy(motif.getOffset());
+			//}
 		}
 		else
 			emptyScene();
@@ -965,12 +1018,13 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	 * You should consider handling communication between MotifLogoWidget 
 	 * and its containing MotifSetWidget with signals and slots...
 	 */
-	public MotifSetView motifSetWidget() {
+	public MotifSetView motifSetView() {
 		QObject qobj = parent();
 		if (qobj != null)
 			if (qobj instanceof MotifSetView)
 				return (MotifSetView)qobj;
-			else if ((qobj.parent() != null) && (qobj.parent() instanceof MotifSetView))
+			else if ((qobj.parent() != null) && 
+					 (qobj.parent() instanceof MotifSetView))
 				return (MotifSetView)qobj.parent();
 		
 		return null;
@@ -995,4 +1049,5 @@ public class LogoView extends QGraphicsView implements ContainedByMotifSetWidget
 	public void setLineEdit(MotifLabelLineEdit lineEdit) {
 		this.lineEdit = lineEdit;
 	}
+	
 }

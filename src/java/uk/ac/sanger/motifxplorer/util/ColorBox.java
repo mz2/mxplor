@@ -113,18 +113,26 @@ public class ColorBox<T> {
 		colors.add(new QColor(204,255,0,opacity));
 		colors.add(new QColor(120,68,33,opacity));
 			
-		List<QColor> cs = new ArrayList<QColor>(colors);
+		List<QColor> lighterCs = new ArrayList<QColor>(colors);
+		List<QColor> darkerCs = new ArrayList<QColor>(colors);
+		List<QColor> muchLighterCs = new ArrayList<QColor>(colors);
+		List<QColor> muchDarkerCs = new ArrayList<QColor>(colors);
 			
-		for (QColor c : cs)
-			colors.add(c.darker(3));
+		for (QColor c : lighterCs)
+			c = c.darker(3);
 		
-		for (QColor c : cs)
-			colors.add(c.lighter(3));
+		for (QColor c : darkerCs)
+			c = c.lighter(3);
 		
-		for (QColor c : cs)
-			colors.add(c.darker(6));
+		for (QColor c : muchLighterCs)
+			c = c.darker(6);
 		
-		for (QColor c : cs)
-			colors.add(c.lighter(6));
+		for (QColor c : muchDarkerCs)
+			c = c.lighter(6);
+		
+		colors.addAll(lighterCs);
+		colors.addAll(darkerCs);
+		colors.addAll(muchLighterCs);
+		colors.addAll(muchDarkerCs);
 	}
 }

@@ -39,9 +39,7 @@ public class QDistribution extends QObject {
 		
 		this.dist = dist;
 		this.info = setupInfo();
-		distScale = 1 * (
-				QDistribution.totalInformation(dist) /
-				QDistribution.totalBits(dist));
+		
 	}
 	
 	private SortedSet<ResVal> setupInfo() {
@@ -124,7 +122,7 @@ public class QDistribution extends QObject {
 			return 0;
 		}
 		double lp = Math.log(p);
-
+		
 		return -p * lp / bits;
 	}
 
@@ -146,14 +144,9 @@ public class QDistribution extends QObject {
 	 * @return the distScale
 	 */
 	public double getDistScale() {
-		return distScale;
-	}
-
-	/**
-	 * @param distScale the distScale to set
-	 */
-	public void setDistScale(double distScale) {
-		this.distScale = distScale;
+		return  1 * (
+				QDistribution.totalInformation(dist) /
+				QDistribution.totalBits(dist));
 	}
 
 	/**

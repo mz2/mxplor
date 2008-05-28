@@ -10,10 +10,10 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.derkholm.nmica.apps.MetaMotifSimulator;
-import net.derkholm.nmica.model.metamotif.Dirichlet;
-import net.derkholm.nmica.model.metamotif.MetaMotif;
-import net.derkholm.nmica.model.metamotif.MetaMotifIOTools;
+import net.derkholm.nmica.metamotif.Dirichlet;
+import net.derkholm.nmica.metamotif.MetaMotif;
+import net.derkholm.nmica.metamotif.MetaMotifIOTools;
+import net.derkholm.nmica.metamotif.MetaMotifTools;
 import net.derkholm.nmica.motif.Motif;
 
 import org.biojava.bio.Annotation;
@@ -25,6 +25,7 @@ import org.biojava.bio.symbol.IllegalSymbolException;
 
 import uk.ac.sanger.motifxplorer.ui.graphics.MotifBoundingBox;
 import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegion;
+import uk.ac.sanger.motifxplorer.ui.graphics.ScoredMotifRegion;
 import uk.ac.sanger.motifxplorer.ui.graphics.SelectableMotifRegion;
 import uk.ac.sanger.motifxplorer.ui.widget.LogoView;
 import uk.ac.sanger.motifxplorer.ui.widget.MotifSetView;
@@ -43,6 +44,9 @@ public class QMotif extends QObject {
 	public static enum EditState {READ_WRITE, READ_ONLY};
 	
 	protected Motif nmicaMotif;
+	
+	protected List<String> notes = new ArrayList<String>();
+	
     public Signal0 loaded = new Signal0();
 
 	protected QFont font = null; 
@@ -53,7 +57,7 @@ public class QMotif extends QObject {
 	public SortedSet<Integer> selectedColumns;
 	public SortedSet<Integer> highlightedColumns;
 	
-	public boolean selected;
+	private boolean selected;
 	
 	//Currently precisions are used without any alterations as the alpha channel
 	
@@ -70,6 +74,7 @@ public class QMotif extends QObject {
 	
 	private boolean isSample = false;
 	private QColor color;
+	private boolean offsetRead = false;
 	
 	public QMotif getLinkedQMotif() {
 		assert  (linkedQMotif == null) || 
@@ -105,6 +110,7 @@ public class QMotif extends QObject {
     public static final Pattern LENGTH_PATTERN = Pattern.compile("length:(\\d+)");
     public static final Pattern SET_ID_PATTERN = Pattern.compile("setId:(\\d+)");
     public static final Pattern COLOR_PATTERN = Pattern.compile("color:(\\#\\d{6,8})");
+    public static final Pattern SCORE_PATTERN = Pattern.compile("score:(\\d+\\.{0,1}\\d*)");
     
     public QMotif(LogoView view, MetaMotif mm) {
     	this.setParent(view);
@@ -121,27 +127,39 @@ public class QMotif extends QObject {
 			e.printStackTrace();
 		} catch (BioException e) {
 			e.printStackTrace();
-		}
-		
+		}		
 		readQMotifAnnotations();
     }
     
     private void readQMotifAnnotations() {
-		if (nmicaMotif.getAnnotation().containsProperty("offset")) {
-			Object o = nmicaMotif.getAnnotation().getProperty("offset");
-			if (o instanceof String)
-				this.offset = Integer.parseInt((String) o);
-			else if (o instanceof Integer)
-				this.offset = (Integer) o;
-		}
-		if (nmicaMotif.getAnnotation().containsProperty("isSelected"))
-			this.selected = true;
-		
-		if (nmicaMotif.getAnnotation().containsProperty("isHighlighted"))
-			this.highlighted = true;
-		
+		readSelectionState();
+		readHighlightState();
+		readColors();
+		readSelectedColumns();
+		readHighlightedColumns();
+		readMotifRegions();
+		readOffset();
+	}
+    
+    private void readSelectionState() {
+    	if (nmicaMotif.getAnnotation().containsProperty("isSelected"))
+			if (Boolean.parseBoolean((String)nmicaMotif
+					.getAnnotation()
+						.getProperty("isSelected")))
+		{this.selected = true;}
+    }
+    
+    private void readHighlightState() {
+    	if (nmicaMotif.getAnnotation().containsProperty("isHighlighted"))
+			if (Boolean.parseBoolean((String)nmicaMotif
+					.getAnnotation()
+						.getProperty("isHighlighted")))
+		{this.highlighted = true;}
+    }
+    
+    private void readColors() {
 		if (nmicaMotif.getAnnotation().containsProperty("color")) {
-			System.out.println("Reading color!");
+			//System.out.println("Reading color!");
 			Object o = nmicaMotif.getAnnotation().getProperty("color");
 			if (o instanceof String)
 				this.color = new QColor((String)o);
@@ -149,6 +167,9 @@ public class QMotif extends QObject {
 				throw new IllegalStateException(
 						"The color annotation is not a String as required!");
 		}
+    }
+
+    private void readSelectedColumns() {
 		if (nmicaMotif.getAnnotation().containsProperty("selectedColumns")) {
 			Object o = nmicaMotif.getAnnotation()
 					.getProperty("selectedColumns");
@@ -161,6 +182,9 @@ public class QMotif extends QObject {
 				selectedColumns.add(Integer.parseInt(tok.nextToken()));
 			} while (tok.hasMoreTokens());
 		}
+    }
+    
+    private void readHighlightedColumns() {
 		if (nmicaMotif.getAnnotation().containsProperty("highlightedColumns")) {
 			Object o = nmicaMotif.getAnnotation().getProperty(
 					"highlightedColumns");
@@ -173,12 +197,12 @@ public class QMotif extends QObject {
 				highlightedColumns.add(Integer.parseInt(tok.nextToken()));
 			} while (tok.hasMoreTokens());
 		}
-		if (nmicaMotif.getAnnotation().containsProperty("motifregions")) {
-			readMotifRegions();
-		}
-	}
+    }
 
 	private void readMotifRegions() {
+		if (!nmicaMotif.getAnnotation().containsProperty("motifregions"))
+			return;
+			
 		Object motifRegsO = nmicaMotif.getAnnotation().getProperty("motifregions");
 		int num = 0;
 		if (motifRegsO instanceof Integer)
@@ -196,6 +220,25 @@ public class QMotif extends QObject {
 			}
 		}
 	}
+    
+	private void readOffset() {
+		if (!nmicaMotif.getAnnotation().containsProperty("offset"))
+			return;
+		
+		int offset;
+		Object offsetObj = nmicaMotif.getAnnotation().getProperty("offset");
+		if (offsetObj instanceof Integer) {
+			offset = ((Integer)offsetObj).intValue();
+		} else if (offsetObj instanceof String) {
+			offset = new Integer((String)offsetObj).intValue();
+		} else {
+			throw new IllegalStateException(
+					"Offset annotation ("+offsetObj+") " +
+					"is of illegal type: " + offsetObj.getClass().getName());
+		}
+		moveBy(offset);
+	}
+
 
 	private MotifRegion readMotifRegion(int i) {
 		Object annValue = nmicaMotif.getAnnotation().getProperty("motifregion" + i);
@@ -249,16 +292,22 @@ public class QMotif extends QObject {
 				SelectableMotifRegion selReg;
 				reg = selReg = new SelectableMotifRegion(null, this, begin, length);
 				
-				LogoView logoView = logoView();
-				MotifSetView msetView = null;
-				if (logoView != null)
-					msetView = logoView().motifSetWidget();
-				if (msetView != null)
-					selReg.setAnnotationSet(msetView.getMotifRegionSet(setId));
-				
+				addToAnnotationSet(setId, selReg);
 				selReg.setSelectedRegion(selected);
 				selReg.setBrushes(regionColor);
-			} else if (type.equals("MotifRegion")) {
+			} else if (type.equals("ScoredMotifRegion")) {
+				ScoredMotifRegion scorReg;
+				reg = scorReg = new ScoredMotifRegion(null,this,begin,length,0);
+				
+				Matcher scoreMatcher = SCORE_PATTERN.matcher(ann);
+				if (scoreMatcher.find())
+					scorReg.setScore(Double.parseDouble(scoreMatcher.group(1)));
+				
+				addToAnnotationSet(setId, scorReg);
+				scorReg.setSelectedRegion(selected);
+				scorReg.setBrushes(regionColor);
+			}
+			 else if (type.equals("MotifRegion")) {
 				reg = new MotifRegion(null, this, begin, length);
 			} else throw new IllegalArgumentException("Type \"" + type + "\" is not supported");
 			if (reg != null) {
@@ -277,6 +326,15 @@ public class QMotif extends QObject {
 		} else throw new IllegalStateException("Annotation value is not of type String");
 		
 		return null;
+	}
+
+	private void addToAnnotationSet(int setId, SelectableMotifRegion selReg) {
+		LogoView logoView = logoView();
+		MotifSetView msetView = null;
+		if (logoView != null)
+			msetView = logoView().motifSetView();
+		if (msetView != null)
+			selReg.setAnnotationSet(msetView.getMotifRegionSet(setId));
 	}
     
 	public void updateQMotifAnnotations() {
@@ -318,14 +376,22 @@ public class QMotif extends QObject {
 					annotationSetStr = "setId:" + r.getAnnotationSet().getId() + ";";
 				
 				//type:SelectableMotifRegion;name:tata;selected:true;begin:1;length:2;setId=0
-				ann.setProperty("motifregion" + rI++,
+				
+				StringBuffer strBuf = new StringBuffer(
 										"type:" + r.getClass().getSimpleName() + ";" +
 										"name:" + r.getName() + ";" +
-										"selected:" + r.isSelected() + ";" +
 										"begin:" + r.getBegin() + ";" +
 										"length:" + r.getLength() + ";" +
 										annotationSetStr + 
-										"color:" + r.getColor());
+										"color:" + r.getColor() + ";");
+				
+				if (r instanceof SelectableMotifRegion)
+					strBuf.append("selected:" + ((SelectableMotifRegion)r).isSelectedRegion() + ";");
+				
+				if (r instanceof ScoredMotifRegion)
+					strBuf.append("score:" + ((ScoredMotifRegion)r).getScore() + ";");
+				
+				ann.setProperty("motifregion" + rI++,strBuf);
 			}
 		}
 	}
@@ -338,7 +404,7 @@ public class QMotif extends QObject {
 		this(parent, sampleMotifFromMetaMotif);
 		this.linkedQMotif = qmotif;
 	}
-
+    
 	public void setupDists() {
     	List<QDistribution> dists = new ArrayList<QDistribution>();
     	WeightMatrix wm = nmicaMotif.getWeightMatrix();
@@ -393,6 +459,11 @@ public class QMotif extends QObject {
 	public void moveBy(int i) {
 		offset = offset + i;
 	}
+	
+	public void moveTo(int i) {
+		offset = i;
+	}
+	
 	public void moveToRight() {
 		offset++;
 	}
@@ -555,8 +626,10 @@ public class QMotif extends QObject {
 				this.selectedColumns.add(column);
 		}else {
 			System.out.println("Unset " + column);
+			
+			//careful there, otherwise it'll be treated as int
 			if (this.selectedColumns.contains(column))
-				this.selectedColumns.remove(new Integer(column)); //careful there, otherwise it'll be treated as int
+				this.selectedColumns.remove(new Integer(column)); 
 		}
 		for (int i : selectedColumns)
 			System.out.print(i + " ");
@@ -599,7 +672,7 @@ public class QMotif extends QObject {
 		QMotif[] qms = new QMotif[sampleNum];
 		for (int i = 0; i < sampleNum; i++) {
 			qms[i] = new QMotif((LogoView)motif.parent(), motif, 
-								MetaMotifSimulator.sampleMotifFromMetaMotif(
+								MetaMotifTools.sampleMotifFromMetaMotif(
 								motif.getMetaMotif(), "" + i));}
 		return qms;
 	}
@@ -694,4 +767,13 @@ public class QMotif extends QObject {
 		else
 			return null;
 	}
+
+	public int getOffset() {
+		return offset;
+	}
+
+	public void setOffset(int offset) {
+		this.offset = offset;
+	}
+
 }

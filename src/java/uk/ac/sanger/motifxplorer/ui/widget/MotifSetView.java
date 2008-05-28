@@ -7,16 +7,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import net.derkholm.nmica.model.metamotif.Dirichlet;
-import net.derkholm.nmica.model.metamotif.MetaMotif;
-import net.derkholm.nmica.model.motif.NMWeightMatrix;
+import net.derkholm.nmica.metamotif.Dirichlet;
+import net.derkholm.nmica.metamotif.MetaMotif;
 import net.derkholm.nmica.motif.Motif;
 import net.derkholm.nmica.motif.MotifIOTools;
+import net.derkholm.nmica.motif.NMWeightMatrix;
 
 import org.biojava.bio.dist.Distribution;
 import org.biojava.bio.symbol.IllegalAlphabetException;
 import org.biojava.bio.symbol.IllegalSymbolException;
 
+import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegion;
 import uk.ac.sanger.motifxplorer.ui.graphics.MotifRegionSet;
 import uk.ac.sanger.motifxplorer.ui.graphics.SelectableMotifRegion;
 import uk.ac.sanger.motifxplorer.ui.model.QMotif;
@@ -55,7 +56,7 @@ public class MotifSetView extends QFrame {
 	private final HashMap<Integer,MotifRegionSet> motifRegionSets = new HashMap<Integer,MotifRegionSet>();
 	
 	public MotifRegionSet newRegionSet() {
-		MotifRegionSet set = new MotifRegionSet();
+		MotifRegionSet set = new MotifRegionSet(this);
 		motifRegionSets.put(set.getId(),set);
 		return set;
 	}
@@ -81,73 +82,39 @@ public class MotifSetView extends QFrame {
 		else throw new IllegalArgumentException(
 				"Region set is not contained by this motif set view");
 	}
-	
 
+	public HashMap<Integer, MotifRegionSet> getMotifRegionSets() {
+		return this.motifRegionSets;
+	}
+	
+	public MotifRegionSet getMotifRegionSetWithName(String name) {
+		for (Integer i : this.motifRegionSets.keySet())
+			if (motifRegionSets.get(i).getName().equals(name)) {
+				System.out.println("Region set with name " + name + " was found.");
+				return motifRegionSets.get(i);
+			}
+		
+		//FIXME: Correct the motif region set naming and get rid of this workaround
+		for (Integer i : this.motifRegionSets.keySet()) {
+			for (MotifRegion mreg : motifRegionSets.get(i).getRegions())
+				if (mreg.getName().equals(name)) {
+					System.out.println("Region set with name " + name + " was found (name != set name).");
+					return motifRegionSets.get(i);
+				}
+		}
+	
+		return null;
+	}
+	
+	
 	public MotifRegionSet getMotifRegionSet(int setId) {
 		if (containsMotifRegionSet(setId)) return motifRegionSets.get(setId);
 		else {
-			MotifRegionSet regionSet = new MotifRegionSet(setId);
+			MotifRegionSet regionSet = new MotifRegionSet(this,setId);
 			motifRegionSets.put(setId,regionSet);
 			return regionSet;
 		}
 	}
-	
-	/*
-	static {
-		colors.add(new QColor(0,177,0,defaultOpacity));
-		colors.add(new QColor(0,0,255,defaultOpacity));
-		colors.add(new QColor(255,0,0,defaultOpacity));
-		colors.add(new QColor(211,141,95,defaultOpacity));
-		colors.add(new QColor(170,212,0,defaultOpacity));
-		colors.add(new QColor(255,102,0,defaultOpacity));
-		colors.add(new QColor(0,68,170,defaultOpacity));
-		colors.add(new QColor(55,200,55,defaultOpacity));
-		colors.add(new QColor(255,128,128,defaultOpacity));
-		colors.add(new QColor(255,0,102,defaultOpacity));
-		colors.add(new QColor(85,153,255,defaultOpacity));
-		colors.add(new QColor(204,0,255,defaultOpacity));
-		colors.add(new QColor(145,111,124,defaultOpacity));
-		colors.add(new QColor(128,128,255,defaultOpacity));
-		colors.add(new QColor(0,255,255,defaultOpacity));
-		colors.add(new QColor(128,128,0,defaultOpacity));
-		colors.add(new QColor(222,135,170,defaultOpacity));
-		colors.add(new QColor(102,0,255,defaultOpacity));
-		colors.add(new QColor(255,85,85,defaultOpacity));
-		colors.add(new QColor(170,212,0,defaultOpacity));
-		colors.add(new QColor(0,102,128,defaultOpacity));
-		colors.add(new QColor(160,44,90,defaultOpacity));
-		colors.add(new QColor(204,255,0,defaultOpacity));
-		colors.add(new QColor(120,68,33,defaultOpacity));
-			
-		List<QColor> cs = new ArrayList<QColor>(colors);
-			
-		for (QColor c : cs)
-			colors.add(c.darker(3));
-		
-		for (QColor c : cs)
-			colors.add(c.lighter(3));
-		
-		for (QColor c : cs)
-			colors.add(c.darker(6));
-		
-		for (QColor c : cs)
-			colors.add(c.lighter(6));
-	}*/
-	
-	/*
-	public QColor colorForMotif(QMotif motif) {
-		QColor col;
-		if ((col = motifColors.get(motif)) != null) return col;
-		
-		col = colorBox.nextColor();
-		setColorForMotif(motif,col);
-		return col;
-	}
-	
-	public void setColorForMotif(QMotif motif, QColor color) {
-		motifColors.put(motif, color);
-		motif.setColor(color);
-	}*/
 	
 	public int logoWidgets() {
 		return widgets.size();
@@ -204,14 +171,23 @@ public class MotifSetView extends QFrame {
 		return new QSize(LabelledLogoView.DEFAULT_TOTAL_WIDGET_WIDTH, height);
 	}
 	
+	//FIXME: Change the selected
+	public void removeMotif(QMotif motif) {
+		layout.removeWidget(motif.logoView());
+		layout.update();
+		motifs.remove(motif);
+		update();
+	}
+	
 	public void addMotifs(List<QMotif> motifs) {
 		if (motifs == null) {
 			this.motifs = new ArrayList<QMotif>();
+			maxCols = MAX_NUM_COLS;
+		} else {
+			for (QMotif m : motifs) addMotif(m);
+			maxCols = maxCols(this.motifs);
 		}
-		for (QMotif m : motifs) addMotif(m);
-		maxCols = maxCols(this.motifs);
 		resize(sizeHint());
-		//update();
 		repaint();
 	}
 
@@ -313,9 +289,12 @@ public class MotifSetView extends QFrame {
 		return selectedMotifs;
 	}
 	
+	
+	// FIXME: figure out how you can keep both this 
+	// and the keyboard shortcuts in the possibly containing MXplor
 	public void keyPressEvent(QKeyEvent e) {
 		//super.keyPressEvent(e);
-		if (Qt.Key.resolve(e.key()) == Qt.Key.Key_Left)
+		/*if (Qt.Key.resolve(e.key()) == Qt.Key.Key_Left)
 			for (QMotif m : motifs)
 				if (m.isSelected() && (m.parent() instanceof LogoView))
 					((LogoView)m.parent()).moveToLeft();
@@ -327,6 +306,7 @@ public class MotifSetView extends QFrame {
 					((LogoView)m.parent()).moveToRight();
 		
 		this.update();
+		*/
 	}
 
 	public List<Distribution[]> allSelectedColumns() {
@@ -437,6 +417,28 @@ public class MotifSetView extends QFrame {
 		return motifs.toArray(new Motif[motifs.size()]);
 	}
 	
+	public HashMap<String,List<SelectableMotifRegion>> selectedMotifRegionsPerSet() {
+    	SelectableMotifRegion[] motRegs = selectedMotifRegions();
+    	HashMap<String, List<SelectableMotifRegion>> 
+    		regMap = new HashMap<String, List<SelectableMotifRegion>>();
+    	
+    	for (SelectableMotifRegion r : motRegs) {
+    		if (!regMap.containsKey(r.getName())) 
+    			regMap.put(r.getName(),new ArrayList<SelectableMotifRegion>());
+    	}
+    	
+		for (QMotif m : motifs)
+    		for (int i = 0,length = m.regions(); i < length; i++) {
+    			if (m.getRegion(i) instanceof SelectableMotifRegion) {
+    				SelectableMotifRegion mreg = (SelectableMotifRegion)m.getRegion(i);
+    				if (mreg.isSelectedRegion()) 
+    					regMap.get(mreg.getName()).add(mreg);
+    			}
+    		}
+		
+		return regMap;
+	}
+	
 	public SelectableMotifRegion[] selectedMotifRegions() {
     	List<SelectableMotifRegion> motRegs = new ArrayList<SelectableMotifRegion>();
 		for (QMotif m : motifs)
@@ -449,6 +451,27 @@ public class MotifSetView extends QFrame {
 		return motRegs.toArray(new SelectableMotifRegion[motRegs.size()]);
 	}
 
+	public HashMap<String,List<Motif>> selectedAnnotationsAsMotifsPerRegionSet() {
+		HashMap<String, List<SelectableMotifRegion>> 
+				selregs = selectedMotifRegionsPerSet();
+		
+		HashMap<String, List<Motif>> annotationMotifsPerRegionSet = 
+				new HashMap<String, List<Motif>>();
+		
+		int i = 0;
+		for (String k : selregs.keySet()) {
+			List<Motif> motifs = new ArrayList<Motif>();
+			annotationMotifsPerRegionSet.put(k, motifs);
+			for (SelectableMotifRegion sr : selregs.get(k)) {
+				Motif m = sr.toMotif();
+				m.setName(k);
+				motifs.add(m);
+			}
+		}
+		
+		return annotationMotifsPerRegionSet;
+	}
+	
 	public Motif[] selectedAnnotationsAsMotifs() {
 		SelectableMotifRegion[] motRegs = selectedMotifRegions();
 		Motif[] ms = new Motif[motRegs.length];
