@@ -1,0 +1,3 @@
+To compile the QT designer UI definition file to Java sources:
+juic -pf -p uk.ac.sanger.motifxplorer.ui -d src/java resources/gui/main_window.jui
+juic -pf -p uk.ac.sanger.motifxplorer.ui -d src/java resources/gui/preferences_window.jui
