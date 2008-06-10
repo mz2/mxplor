@@ -1,5 +1,5 @@
 /*
- * NestedMICA Motif Inference Toolkit
+:q * NestedMICA Motif Inference Toolkit
  *
  * Copyright (c) 2004-2007: Genome Research Ltd.
  *
@@ -85,7 +85,8 @@ public class MXplorAppProcessor implements AnnotationProcessor {
 								"${APP_DIR}/lib/nmica.jar:" +
 								"${APP_DIR}/lib/colt.jar:" +
 								"${APP_DIR}/lib/nmica-extra.jar:" +
-								"${QTJAMBI_HOME/qtjambi.jar%n");
+								"${APP_DIR}/lib/mxplor.jar:" +
+								"${QTJAMBI_PATH}/qtjambi.jar%n");
 						pw.printf("%n");
 						pw.printf("${JAVA_CMD} ${JVM} ${JVMOPTS} -XstartOnFirstThread -classpath ${APP_CLASSPATH} -Djava.library.path=${NMICA_HOME}/native -Dchangeless.no_dire_warning=true ${MAINCLASS} \"$@\"%n");
 
