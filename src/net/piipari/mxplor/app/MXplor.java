@@ -1,4 +1,4 @@
-package net.piipari.nmica.mxplor.app;
+package net.piipari.mxplor.app;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;

@@ -1,4 +1,4 @@
-package net.piipari.nmica.mxplor.app;
+package net.piipari.mxplor.app;
 
 import com.trolltech.qt.core.QMessageHandler;
 
