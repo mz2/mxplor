@@ -66,7 +66,7 @@
 
     <!-- Subdirectories for main source and classes -->
     <property name="name.main" value="mxplor" />
-    <property name="Name.main" value="NestedMICA-extra" />
+    <property name="Name.main" value="MXplor" />
     <property name="build.dest.main" value="${build.classes.dir}/${name.main}" />
     <property name="build.docs.main" value="${build.dest.docs}/${name.main}" />
     <property name="jar.main" value="${lib.dir}/${name.main}.jar" />
@@ -130,7 +130,7 @@
 	<pathelement path="${classpath}" />
       </classpath>
 
-      <filename name="net/derkholm/**/*.java" />
+      <filename name="net/**/*.java" />
     </javac>
   </target>
 
@@ -150,7 +150,7 @@
 
       <option name="launchpadDir" value="${bin.dir}" />
       
-      <filename name="net/derkholm/**/*.java" />
+      <filename name="net/**/*.java" />
     </apt>
   </target>
 
