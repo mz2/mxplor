@@ -25,6 +25,7 @@ import net.derkholm.nmica.model.metamotif.MetaMotifIOTools;
 import net.derkholm.nmica.motif.Motif;
 import net.derkholm.nmica.motif.MotifIOTools;
 import net.derkholm.nmica.motif.MotifTools;
+import net.derkholm.nmica.utils.CliTools;
 import net.piipari.mxplor.cmd.RemoveMotifCommand;
 import net.piipari.mxplor.cmd.ReverseComplementCommand;
 import net.piipari.mxplor.cmd.ShiftCommand;
@@ -44,7 +45,9 @@ import org.biojava.bio.BioException;
 import org.biojava.bio.symbol.IllegalAlphabetException;
 import org.biojava.bio.symbol.IllegalSymbolException;
 import org.bjv2.util.cli.App;
+import org.bjv2.util.cli.ConsoleMessages;
 import org.bjv2.util.cli.Option;
+import org.bjv2.util.cli.UserLevel;
 
 import com.trolltech.qt.core.QEvent;
 import com.trolltech.qt.core.QObject;
@@ -75,8 +78,7 @@ import com.trolltech.qt.gui.QTableView;
 import com.trolltech.qt.gui.QVBoxLayout;
 import com.trolltech.qt.gui.QWidget;
 
-@App(overview="A motif / metamotif set viewer and editor", generateStub=true)
-@MXplorApp(launchName="mxplor", vm=VirtualMachine.SERVER)
+@App(overview="A motif / metamotif set viewer and editor", generateStub=false)
 public class MXplor extends QMainWindow {
     private static final String LAST_OPEN_LOCATION = "last.open.location";
     private static final String LAST_SAVE_LOCATION = "last.save.location";
@@ -101,8 +103,6 @@ public class MXplor extends QMainWindow {
     public QAction actionAlign;
     
     public QAction actionReverse_complement;
-    //public QAction actionBest_hits;
-    //public QAction actionBest_reciprocal_hits;
     public QAction actionMLEMetaMotif;
     public QWidget centralwidget;
     public QVBoxLayout vboxLayout;
@@ -121,7 +121,7 @@ public class MXplor extends QMainWindow {
 
 	private boolean nmicaStarted = false;
 	private boolean infoContentScale = true;
-    //private NestedMICATask nmicaTask;
+	
     private Signal2<Motif, Integer> 
     	cycleResultsReady = new Signal2<Motif, Integer>();
 	
@@ -185,11 +185,13 @@ public class MXplor extends QMainWindow {
 	private int windowHeight = 0;
 	private int windowWidth = 0;
 	private String setName = null;
+	private String[] pdfs;
 	
 	private static final String VERSION = "0.1";
 	
 	@Option(help="Motif set name",optional=true)
 	public void setName(String name) {
+		System.out.println("Motif set name:" + name);
 		this.setName = name;
 	}
 	
@@ -203,7 +205,12 @@ public class MXplor extends QMainWindow {
 		this.windowWidth = h;
 	}
 	
-	public void main(String[] args) throws Exception {
+	@Option(help="Print motif set(s) to PDF(s)", optional=true)
+	public void setPdf(String[] filenames) {
+		this.pdfs = filenames;
+	}
+	
+	public static void main(String[] args) throws Throwable {
     	String mxplorrc = System.getProperty("user.home") + "/.mxplorrc";
     	
     	File propsFile = new File(mxplorrc);
@@ -214,8 +221,31 @@ public class MXplor extends QMainWindow {
     			
 		QApplication.initialize(args);
 		QApplication app = QApplication.instance();
-		
-		System.err.println("MXplor version " + VERSION );
+
+		MXplor mapp = new MXplor();
+		List<String> argList = Arrays.asList(args);
+		if (argList.indexOf("-help") >= 0) {
+			System.out.println("Showing help");
+		  ConsoleMessages.helpMessage(app, System.err, UserLevel.USER, 80);
+		  return;
+		}
+		try {
+			args = CliTools.configureBean(app, args);
+			mapp.run(app,args);
+			
+			Calendar cal = Calendar.getInstance();
+		    SimpleDateFormat sdf = new SimpleDateFormat(DATETIME_FORMAT);
+			props.store(new BufferedOutputStream(
+						new FileOutputStream(mxplorrc)),
+					sdf.format(cal.getTime()));
+		} catch (org.bjv2.util.cli.ConfigurationException ex) {
+		  ConsoleMessages.errorMessage(app, System.err, 80, ex);
+		  System.exit(1);
+		}
+	}
+
+	
+	public void run(QApplication app, String[] args) throws Exception {
 		Motif[] motifs = null;
 		String fn = null;
 		
@@ -226,11 +256,13 @@ public class MXplor extends QMainWindow {
 				HashMap<String, List<Motif>> motifSets;
 				if (filename != null) {
 					motifSets = importXMS(filename);
-					//System.out.println("Imported XMS ");
 					for (String s : motifSets.keySet()) {
 						System.err.println(s);
 			    		newMXplorWindow(s, QMotifTools.motifsToQMotifs(
-			    				motifSets.get(s).toArray(new Motif[motifSets.get(s).size()])));
+			    				motifSets
+			    					.get(s)
+			    						.toArray(
+		    								new Motif[motifSets.get(s).size()])));
 					}
 
 				}
@@ -253,13 +285,6 @@ public class MXplor extends QMainWindow {
 		}
 		
 		QApplication.exec();
-		
-		Calendar cal = Calendar.getInstance();
-	    SimpleDateFormat sdf = new SimpleDateFormat(DATETIME_FORMAT);
-	    
-		props.store(new BufferedOutputStream(
-						new FileOutputStream(mxplorrc)),
-					sdf.format(cal.getTime()));
 
 	}
 	
@@ -272,7 +297,6 @@ public class MXplor extends QMainWindow {
 	}
 	
 	public MXplor() {
-		
 	}
 	
 	public MXplor(String name, List<QMotif> motifs) {
@@ -584,6 +608,10 @@ public class MXplor extends QMainWindow {
 		
 		if (filename == null) return;
 		
+		printToPDF(filename);
+	}
+
+	private void printToPDF(String filename) {
 		QPrinter printer = new QPrinter();
         printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat);
         printer.setOutputFileName(filename);
